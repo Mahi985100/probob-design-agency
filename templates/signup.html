@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <a href="/" class="auth-logo">PROBOB<span class="logo-dot">.</span></a>
+            <h1>Create <em>Account</em></h1>
+            <p>Join the Probob community</p>
+        </div>
+        <form action="/signup{% if request.args.get('next') %}?next={{ request.args.get('next') }}{% endif %}" method="POST" class="auth-form">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" placeholder="John Doe" required autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="you@email.com" required autocomplete="email">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Min 6 characters" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirm_password" placeholder="Repeat password" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary full-width">Create Account →</button>
+        </form>
+        <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+    </div>
+    <div class="auth-visual">
+        <div class="auth-visual-content">
+            <div class="av-quote">"Every great brand starts with a bold idea — and the right team to bring it to life."</div>
+            <div class="av-perks">
+                <div class="av-perk">✦ Access to client dashboard</div>
+                <div class="av-perk">✦ Project tracking tools</div>
+                <div class="av-perk">✦ Exclusive design resources</div>
+                <div class="av-perk">✦ Direct team communication</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

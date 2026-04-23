@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<div class="page-hero compact dashboard-hero-bg"><div class="container"><span class="section-kicker">Client Portal</span><h1>Dashboard</h1><p>Welcome back, <strong>{{ user.name }}</strong>. Your quotes, projects, files, revisions, consultations, and invoices now live here.</p></div></div>
+<section class="section"><div class="container">
+    <div class="dashboard-stats">
+        <div class="dash-stat glass-card"><div class="dash-stat-icon">📝</div><div class="dash-stat-num">{{ stats.quotes }}</div><div class="dash-stat-label">Quote Requests</div></div>
+        <div class="dash-stat glass-card"><div class="dash-stat-icon">📁</div><div class="dash-stat-num">{{ stats.projects }}</div><div class="dash-stat-label">Active Projects</div></div>
+        <div class="dash-stat glass-card"><div class="dash-stat-icon">📤</div><div class="dash-stat-num">{{ stats.files }}</div><div class="dash-stat-label">Uploaded Files</div></div>
+        <div class="dash-stat glass-card"><div class="dash-stat-icon">💳</div><div class="dash-stat-num">{{ stats.invoices }}</div><div class="dash-stat-label">Invoices</div></div>
+    </div>
+    <div class="dash-actions" style="margin-bottom:20px;">
+        <a href="/start-project" class="btn-primary">Start Project</a>
+        <a href="/book-consultation" class="btn-outline">Book Consultation</a>
+        <a href="/client/files" class="btn-outline">Upload Files</a>
+        <a href="/client/revisions" class="btn-outline">Request Revision</a>
+        <a href="/profile" class="btn-outline">My Profile</a>
+    </div>
+
+    <!-- Smart Dashboard Charts -->
+    <div class="dashboard-grid-2" style="margin-bottom: 20px;">
+        <div class="dash-panel glass-card">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-kicker">Portfolio</span>
+                    <h2>Project <em>Status</em></h2>
+                </div>
+            </div>
+            <div id="projectStatusChart" style="height: 300px;"></div>
+        </div>
+        <div class="dash-panel glass-card">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-kicker">Activity</span>
+                    <h2>Weekly <em>Insights</em></h2>
+                </div>
+            </div>
+            <div id="activityInsightsChart" style="height: 300px;"></div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid-2">
+        <div class="dash-panel glass-card">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-kicker">Services</span>
+                    <h2>Top <em>Popularity</em></h2>
+                </div>
+            </div>
+            <div style="padding: 15px;">
+                {% for service in chart_data.top_services %}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
+                    <div style="color: var(--text-1);">{{ service.name }}</div>
+                    <div style="background: var(--gold); color: #000; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">{{ service.count }} requests</div>
+                </div>
+                <div style="width: 100%; background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px; margin-bottom: 20px; overflow: hidden;">
+                    <div style="width: {{ (service.count / chart_data.top_services[0].count * 100)|int if chart_data.top_services[0].count > 0 else 0 }}%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); height: 100%;"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="dash-panel glass-card">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-kicker">Notifications</span>
+                    <h2>Latest <em>Updates</em></h2>
+                </div>
+                <a class="btn-outline" href="{{ url_for('notifications_page') }}">Open Inbox</a>
+            </div>
+            {% if notifications %}
+            <div class="metric-list">
+                {% for n in notifications %}
+                <div class="metric-item">
+                    <div class="metric-row"><strong>{{ n.title }}</strong><span>{{ n.created_at[:10] }}</span></div>
+                    <p style="margin-top:8px;color:var(--text-2);">{{ n.message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">No notifications yet.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeColors = ['#d4af37', '#f0d060', '#8b6914', '#e8e4dc', '#5c5852'];
+            
+            // Project Status Donut Chart
+            const statusOptions = {
+                series: {{ chart_data.status_values|tojson }},
+                chart: {
+                    type: 'donut',
+                    height: 300,
+                    foreColor: '#9e9a93'
+                },
+                labels: {{ chart_data.status_labels|tojson }},
+                colors: themeColors,
+                stroke: { show: false },
+                legend: {
+                    position: 'bottom',
+                    horizontalAlign: 'center',
+                },
+                dataLabels: {
+                    enabled: true,
+                    dropShadow: { enabled: false }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%',
+                            labels: {
+                                show: true,
+                                name: { show: true, color: '#ffffff' },
+                                value: { show: true, color: '#d4af37', fontSize: '20px', fontWeight: 'bold' },
+                                total: {
+                                    show: true,
+                                    label: 'Total Projects',
+                                    color: '#9e9a93',
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                tooltip: { theme: 'dark' }
+            };
+
+            const statusChart = new ApexCharts(document.getElementById("projectStatusChart"), statusOptions);
+            statusChart.render();
+
+            // Activity Insights Bar Chart
+            const activityOptions = {
+                series: [{
+                    name: 'Activity',
+                    data: {{ chart_data.activity_values|tojson }}
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 300,
+                    toolbar: { show: false },
+                    foreColor: '#9e9a93'
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 6,
+                        columnWidth: '45%',
+                        distributed: true,
+                    }
+                },
+                dataLabels: { enabled: false },
+                colors: themeColors,
+                xaxis: {
+                    categories: {{ chart_data.activity_labels|tojson }},
+                    axisBorder: { show: false },
+                    axisTicks: { show: false }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: '#5c5852' }
+                    }
+                },
+                grid: {
+                    borderColor: 'rgba(255,255,255,0.05)',
+                    strokeDashArray: 4
+                },
+                legend: { show: false },
+                tooltip: { theme: 'dark' }
+            };
+
+            const activityChart = new ApexCharts(document.getElementById("activityInsightsChart"), activityOptions);
+            activityChart.render();
+        });
+    </script>
+    <div class="dash-section glass-card"><div class="panel-head"><div><span class="panel-kicker">Projects</span><h2>Project <em>Tracker</em></h2></div></div>{% if projects %}<div class="dash-table-wrap"><table class="dash-table"><thead><tr><th>Project</th><th>Service</th><th>Status</th><th>Progress</th><th>Due</th></tr></thead><tbody>{% for p in projects %}<tr><td><strong>{{ p.title }}</strong></td><td>{{ p.service or '—' }}</td><td><span class="status-badge status-{{ p.status|lower|replace(' ','-') }}">{{ p.status }}</span></td><td>{{ p.progress }}%</td><td>{{ p.due_date or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state">No active projects yet. Accepting a quote will automatically create one.</div>{% endif %}</div>
+    <div class="dashboard-grid-2">
+        <div class="dash-section glass-card"><div class="panel-head"><div><span class="panel-kicker">Consultations</span><h2>Booked <em>Calls</em></h2></div></div>{% if bookings %}<div class="dash-table-wrap"><table class="dash-table"><thead><tr><th>Service</th><th>Date</th><th>Time</th><th>Status</th></tr></thead><tbody>{% for b in bookings %}<tr><td>{{ b.service_interest or '—' }}</td><td>{{ b.booking_date }}</td><td>{{ b.booking_time }}</td><td><span class="status-badge status-{{ b.status|lower|replace(' ','-') }}">{{ b.status }}</span></td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state">No consultations booked.</div>{% endif %}</div>
+        <div class="dash-section glass-card"><div class="panel-head"><div><span class="panel-kicker">Invoices</span><h2>Billing <em>Status</em></h2></div></div>{% if invoices %}<div class="dash-table-wrap"><table class="dash-table"><thead><tr><th>Invoice</th><th>Project</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>{% for i in invoices %}<tr><td><strong>{{ i.invoice_no }}</strong><br>
+<a href="{{ url_for('download_invoice_pdf', invoice_id=i.id) }}" class="admin-pdf-link">
+    📄 Download PDF
+</a></td><td>{{ i.project_title or i.title }}</td><td>₹{{ i.balance_amount if i.balance_amount is not none and i.balance_amount != '' else i.amount }}{% if i.paid_amount %}<br><small>Paid: ₹{{ i.paid_amount }}</small>{% endif %}</td><td><span class="status-badge status-{{ i.status|lower|replace(' ','-') }}">{{ i.status }}</span></td><td>{% if i.status != 'Paid' %}<form method="POST" action="{{ url_for('create_payment_order') }}"><input type="hidden" name="invoice_id" value="{{ i.id }}"><button class="btn-outline" type="submit">Pay Now</button></form>{% else %}<span class="status-badge status-paid">Completed</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state">No invoices yet.</div>{% endif %}</div>
+    </div>
+    <div class="dash-section glass-card" style="margin-top: 30px;">
+        <div class="panel-head">
+            <div>
+                <span class="panel-kicker">Experience</span>
+                <h2>Share Your <em>Feedback</em></h2>
+                <p style="color: var(--text-2); font-size: 0.9rem; margin-top: 5px;">How was your experience with us? Rate our services and help us improve.</p>
+            </div>
+        </div>
+        <form method="POST" action="{{ url_for('submit_feedback') }}" class="feedback-form" style="padding: 20px;">
+            <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; align-items: flex-start;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; width: 100%;">Overall Rating</label>
+                    <div class="star-rating" style="display: flex; justify-content: flex-start; gap: 10px; font-size: 1.8rem; cursor: pointer; color: rgba(255,255,255,0.1); margin-bottom: 20px; width: 100%;">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                    <input type="hidden" name="rating" id="ratingInput" value="5">
+                </div>
+                <div style="flex: 2; min-width: 280px;">
+                    <label style="display: block; margin-bottom: 8px;">Your Review / Testimonial</label>
+                    <textarea name="message" placeholder="What did you like? What can we do better?" required style="width: 100%; height: 120px; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; resize: vertical;"></textarea>
+                    <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn-primary">Submit Review</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div></section>
+
+<style>
+    .admin-pdf-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 4px 10px;
+        background: rgba(212, 175, 55, 0.1);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        color: #d4af37 !important;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .admin-pdf-link:hover {
+        background: rgba(212, 175, 55, 0.2);
+        border-color: #d4af37;
+        color: #fff !important;
+        transform: translateY(-1px);
+    }
+    .star-rating .star.active {
+        color: #ffc257;
+        text-shadow: 0 0 10px rgba(255, 194, 87, 0.5);
+    }
+    .star-rating .star:hover {
+        color: #ffc257;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stars = document.querySelectorAll('.star-rating .star');
+        const ratingInput = document.getElementById('ratingInput');
+
+        function updateStars(value) {
+            stars.forEach(s => {
+                if (s.dataset.value <= value) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        }
+
+        // Initial state
+        updateStars(ratingInput.value);
+
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const value = this.dataset.value;
+                ratingInput.value = value;
+                updateStars(value);
+            });
+
+            star.addEventListener('mouseover', function() {
+                updateStars(this.dataset.value);
+            });
+
+            star.addEventListener('mouseout', function() {
+                updateStars(ratingInput.value);
+            });
+        });
+    });
+</script>
+{% endblock %}

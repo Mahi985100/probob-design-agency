@@ -1,0 +1,76 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Portfolio{% endblock %}
+{% block admin_heading %}Portfolio CRUD{% endblock %}
+{% block admin_body %}
+<div class="crud-layout stacked-crud">
+  <div class="glass-card admin-section crud-block-header"><h2 class="crud-block-title">Add Portfolio Item</h2><form class="crud-form" method="POST" enctype="multipart/form-data" action="{% if edit_item %}{{ url_for('admin_edit_portfolio', item_id=edit_item.id) }}{% else %}{{ url_for('admin_create_portfolio') }}{% endif %}">
+    <h3>{% if edit_item %}Edit Portfolio Item{% else %}Add Portfolio Item{% endif %}</h3>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label>Title *</label>
+        <input type="text" name="title" placeholder="e.g. Acme Branding" value="{{ edit_item.title if edit_item else '' }}" required>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" name="category" placeholder="e.g. Branding" value="{{ edit_item.category if edit_item else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Emoji</label>
+        <input type="text" name="emoji" placeholder="e.g. 🎨" value="{{ edit_item.emoji if edit_item else '🎨' }}">
+      </div>
+      <div class="form-group">
+        <label>Cover Image</label>
+        <input type="file" name="image" accept="image/*">
+        {% if edit_item and edit_item.cover_image %}
+          <div style="margin-top: 10px;">
+            <img src="{{ url_for('static', filename='uploads/' ~ edit_item.cover_image) }}" style="width: 100px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+            <p style="font-size: 11px; opacity: 0.6;">Current image: {{ edit_item.cover_image }}</p>
+          </div>
+        {% endif %}
+      </div>
+      <div class="form-group" style="display: flex; align-items: center; margin-top: 25px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; flex-direction: row; font-weight: 500;">
+          <input type="checkbox" name="featured" {% if edit_item and edit_item.featured %}checked{% endif %} style="width: 20px; height: 20px; margin: 0;"> 
+          Set as Featured Project
+        </label>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 15px;">
+      <label>Description</label>
+      <textarea name="description" rows="5" placeholder="Describe the project details..." style="min-height: 120px;">{{ edit_item.description if edit_item else '' }}</textarea>
+    </div>
+    <div class="admin-actions">
+      <button class="btn-primary" type="submit">{% if edit_item %}Update Item{% else %}Create Item{% endif %}</button>
+      {% if edit_item %}<a class="btn-outline" href="{{ url_for('admin_portfolio_page') }}">Cancel Edit</a>{% endif %}
+    </div>
+  </form></div>
+  <div class="glass-card admin-section">
+    <h2>Portfolio Records</h2>
+    <div class="table-wrap"><table class="admin-table"><thead><tr><th>Preview</th>
+                <th>Title</th><th>Category</th><th>Featured</th><th>Description</th><th>Actions</th></tr></thead><tbody>
+      {% for item in portfolio_items['items'] %}
+      <tr>
+        <td>
+          {% if item.cover_image %}
+            <img src="{{ url_for('static', filename='uploads/' ~ item.cover_image) }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+          {% else %}
+            <span style="font-size: 24px;">{{ item.emoji }}</span>
+          {% endif %}
+        </td>
+        <td><strong>{{ item.title }}</strong></td>
+        <td>{{ item.category }}</td>
+        <td><span class="badge {{ 'accepted' if item.featured else 'reviewing' }}">{{ 'Yes' if item.featured else 'No' }}</span></td>
+        <td><div style="max-width: 250px; font-size: 13px; opacity: 0.8;">{{ item.description }}</div></td>
+        <td><div class="admin-actions"><a class="btn-outline" href="{{ url_for('admin_edit_portfolio', item_id=item.id) }}">Edit</a><form method="POST" action="{{ url_for('admin_delete_portfolio', item_id=item.id) }}" style="display:inline;" onsubmit="return confirm('Delete this item?');"><button class="btn-outline btn-danger" type="submit">Delete</button></form></div></td>
+      </tr>
+      {% else %}<tr><td colspan="6">No portfolio items yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  <div class="pagination">
+    {% if portfolio_items['has_prev'] %}<a href="{{ url_for('admin_portfolio_page', page=portfolio_items['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ portfolio_items['page'] }} / {{ portfolio_items['pages'] }}</span>
+    {% if portfolio_items['has_next'] %}<a href="{{ url_for('admin_portfolio_page', page=portfolio_items['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+
+  </div>
+</div>
+{% endblock %}

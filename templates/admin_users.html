@@ -1,0 +1,92 @@
+{% extends 'admin_base.html' %}
+{% block title %}Manage Users{% endblock %}
+{% block admin_heading %}User Management{% endblock %}
+
+{% block admin_body %}
+<div class="glass-card admin-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <span class="panel-kicker">Platform Control</span>
+            <h2>Manage <em>Users</em></h2>
+            <p class="admin-subtext">View all registered accounts, change roles, or deactivate suspicious users.</p>
+        </div>
+        <div class="admin-actions">
+            <a href="{{ url_for('admin_export_csv', export_type='users') }}" class="btn-outline">📥 Export CSV</a>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Registration Date</th>
+                    <th>User Details</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users['items'] %}
+                <tr>
+                    <td>{{ user.created_at[:10] if user.created_at else '—' }}</td>
+                    <td>
+                        <strong>{{ user.name }}</strong><br>
+                        <small>{{ user.email }}</small>
+                    </td>
+                    <td>
+                        <form action="{{ url_for('admin_change_user_role', user_id=user.id, page=users['page'], search=request.args.get('search', '')) }}" method="POST" class="inline-form">
+                            <select name="role" onchange="this.form.submit()">
+                                <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td>
+                        <span class="badge {% if user.status == 'active' %}confirmed{% else %}rejected{% endif %}">
+                            {{ user.status|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="admin-actions" style="gap: 8px;">
+                            <form action="{{ url_for('admin_toggle_user_status', user_id=user.id, page=users['page'], search=request.args.get('search', '')) }}" method="POST">
+                                <button type="submit" class="btn-outline" style="font-size: 0.8rem; padding: 6px 10px;">
+                                    {% if user.status == 'active' %}Deactivate{% else %}Activate{% endif %}
+                                </button>
+                            </form>
+                            <form action="{{ url_for('admin_delete_user', user_id=user.id, page=users['page'], search=request.args.get('search', '')) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
+                                <button type="submit" class="btn-outline" style="font-size: 0.8rem; padding: 6px 10px; color: #ff667c; border-color: rgba(255,102,124,0.3);">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="admin-search-empty">No users found matching your search.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        {% if users['has_prev'] %}
+        <a href="{{ url_for('admin_users_page', page=users['prev_page'], search=request.args.get('search', '')) }}">Prev</a>
+        {% endif %}
+        <span>Page {{ users['page'] }} / {{ users['pages'] }}</span>
+        {% if users['has_next'] %}
+        <a href="{{ url_for('admin_users_page', page=users['next_page'], search=request.args.get('search', '')) }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .inline-form select {
+        width: auto;
+        padding: 4px 8px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}

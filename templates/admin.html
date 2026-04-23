@@ -1,0 +1,682 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<div class="page-hero compact dashboard-hero-bg">
+    <div class="container">
+        <span class="section-kicker">Admin Control Center</span>
+        <h1>Admin Dashboard</h1>
+        <p>Manage quotes, bookings, projects, files, revisions, invoices, services, portfolio, blog, and testimonials from one place.</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+            <a href="{{ url_for('admin_view_dates') }}" class="btn-outline">📅 View Dates</a>
+        </div>
+
+        <div class="dashboard-stats">
+            <div class="dash-stat glass-card">
+                <div class="dash-stat-icon">👥</div>
+                <div class="dash-stat-num">{{ stats.users }}</div>
+                <div class="dash-stat-label">Users</div>
+            </div>
+            <div class="dash-stat glass-card">
+                <div class="dash-stat-icon">📝</div>
+                <div class="dash-stat-num">{{ stats.quotes }}</div>
+                <div class="dash-stat-label">Quotes</div>
+            </div>
+            <div class="dash-stat glass-card">
+                <div class="dash-stat-icon">📁</div>
+                <div class="dash-stat-num">{{ stats.projects }}</div>
+                <div class="dash-stat-label">Projects</div>
+            </div>
+            <div class="dash-stat glass-card">
+                <div class="dash-stat-icon">📅</div>
+                <div class="dash-stat-num">{{ stats.bookings }}</div>
+                <div class="dash-stat-label">Bookings</div>
+            </div>
+            <div class="dash-stat glass-card">
+                <div class="dash-stat-icon">💳</div>
+                <div class="dash-stat-num">{{ stats.invoices }}</div>
+                <div class="dash-stat-label">Invoices</div>
+            </div>
+            <div class="dash-stat glass-card">
+                <div class="dash-stat-icon">📤</div>
+                <div class="dash-stat-num">{{ stats.files }}</div>
+                <div class="dash-stat-label">Files</div>
+            </div>
+        </div>
+
+        <div class="dash-section glass-card">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-kicker">Quotes</span>
+                    <h2>Quote <em>Requests</em></h2>
+                </div>
+            </div>
+            {% if quotes %}
+            <div class="dash-table-wrap">
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Service</th>
+                            <th>Budget</th>
+                            <th>Deadline</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in quotes %}
+                        <tr>
+                            <td><strong>{{ q.client_name }}</strong><br><small>{{ q.email }}</small></td>
+                            <td>{{ q.service }}</td>
+                            <td>{{ q.budget_range or '—' }}</td>
+                            <td>{{ q.deadline or '—' }}</td>
+                            <td><span class="status-badge status-{{ q.status|lower|replace(' ','-') }}">{{ q.status }}</span></td>
+                            <td>
+                                <form method="POST" action="/admin/quotes/{{ q.id }}/update" style="display:flex;gap:8px;">
+                                    <select name="status">
+                                        <option {% if q.status=='New' %}selected{% endif %}>New</option>
+                                        <option {% if q.status=='Reviewing' %}selected{% endif %}>Reviewing</option>
+                                        <option {% if q.status=='Quoted' %}selected{% endif %}>Quoted</option>
+                                        <option {% if q.status=='Accepted' %}selected{% endif %}>Accepted</option>
+                                        <option {% if q.status=='Rejected' %}selected{% endif %}>Rejected</option>
+                                    </select>
+                                    <button class="btn-outline" type="submit">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">No quote requests yet.</div>
+            {% endif %}
+        </div>
+
+        <div class="dashboard-grid-2">
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Projects</span>
+                        <h2>Create <em>Project</em></h2>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/projects/create" class="auth-form">
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Title</label><input type="text" name="title" required></div>
+                        <div class="form-group"><label>Client Email</label><input type="email" name="client_email"></div>
+                        <div class="form-group"><label>Service</label><input type="text" name="service"></div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status">
+                                <option>Discovery</option>
+                                <option>In Progress</option>
+                                <option>First Draft Sent</option>
+                                <option>Revision Round</option>
+                                <option>Final Delivery</option>
+                                <option>Closed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select name="priority">
+                                <option>Low</option>
+                                <option selected>Medium</option>
+                                <option>High</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Budget</label><input type="text" name="budget"></div>
+                        <div class="form-group"><label>Due Date</label><input type="date" name="due_date"></div>
+                        <div class="form-group"><label>Designer Name</label><input type="text" name="designer_name"></div>
+                        <div class="form-group"><label>Progress %</label><input type="number" name="progress" min="0" max="100" value="0"></div>
+                    </div>
+                    <div class="form-group"><label>Brief</label><textarea name="brief" rows="4"></textarea></div>
+                    <button class="btn-primary" type="submit">Create Project</button>
+                </form>
+            </div>
+
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Invoices</span>
+                        <h2>Create <em>Invoice</em></h2>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/invoices/create" class="auth-form">
+                    <div class="form-group">
+                        <label>Project</label>
+                        <select name="project_id">
+                            {% for p in projects %}
+                            <option value="{{ p.id }}">{{ p.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Title</label><input type="text" name="title"></div>
+                        <div class="form-group"><label>Amount</label><input type="text" name="amount" placeholder="₹25,000"></div>
+                        <div class="form-group"><label>Due Date</label><input type="date" name="due_date"></div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status">
+                                <option>Pending</option>
+                                <option>Paid</option>
+                                <option>Overdue</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Notes</label><textarea name="notes" rows="3"></textarea></div>
+                    <button class="btn-primary" type="submit">Create Invoice</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="dash-section glass-card">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-kicker">Project Tracker</span>
+                    <h2>Manage <em>Projects</em></h2>
+                </div>
+            </div>
+            {% if projects %}
+            <div class="dash-table-wrap">
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Client</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Due</th>
+                            <th>Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in projects %}
+                        <tr>
+                            <td><strong>{{ p.title }}</strong><br><small>{{ p.service or '—' }}</small></td>
+                            <td>{{ p.client_name or 'Unassigned' }}</td>
+                            <td><span class="status-badge status-{{ p.status|lower|replace(' ','-') }}">{{ p.status }}</span></td>
+                            <td>{{ p.progress }}%</td>
+                            <td>{{ p.due_date or '—' }}</td>
+                            <td>
+                                <form method="POST" action="/admin/projects/{{ p.id }}/update" style="display:grid;gap:8px;min-width:220px;">
+                                    <select name="status">
+                                        <option {% if p.status=='Discovery' %}selected{% endif %}>Discovery</option>
+                                        <option {% if p.status=='In Progress' %}selected{% endif %}>In Progress</option>
+                                        <option {% if p.status=='First Draft Sent' %}selected{% endif %}>First Draft Sent</option>
+                                        <option {% if p.status=='Revision Round' %}selected{% endif %}>Revision Round</option>
+                                        <option {% if p.status=='Final Delivery' %}selected{% endif %}>Final Delivery</option>
+                                        <option {% if p.status=='Closed' %}selected{% endif %}>Closed</option>
+                                    </select>
+                                    <input type="number" name="progress" min="0" max="100" value="{{ p.progress }}">
+                                    <input type="date" name="due_date" value="{{ p.due_date or '' }}">
+                                    <input type="text" name="designer_name" value="{{ p.designer_name or '' }}" placeholder="Designer">
+                                    <select name="priority">
+                                        <option {% if p.priority=='Low' %}selected{% endif %}>Low</option>
+                                        <option {% if p.priority=='Medium' %}selected{% endif %}>Medium</option>
+                                        <option {% if p.priority=='High' %}selected{% endif %}>High</option>
+                                    </select>
+                                    <input type="text" name="note" placeholder="Update note">
+                                    <button class="btn-outline" type="submit">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">No projects yet.</div>
+            {% endif %}
+        </div>
+
+        <div class="dashboard-grid-2">
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Consultation Requests</span>
+                        <h2>Booking <em>Queue</em></h2>
+                    </div>
+                </div>
+                {% if bookings %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Service</th>
+                                <th>Slot</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in bookings %}
+                            <tr>
+                                <td>{{ b.name }}<br><small>{{ b.email }}</small></td>
+                                <td>{{ b.service_interest or '—' }}</td>
+                                <td>{{ b.booking_date }} {{ b.booking_time }}</td>
+                                <td><span class="status-badge status-{{ b.status|lower|replace(' ','-') }}">{{ b.status }}</span></td>
+                                <td>
+                                    <form method="POST" action="/admin/bookings/{{ b.id }}/update" style="display:flex;gap:8px;">
+                                        <select name="status">
+                                            <option {% if b.status=='Requested' %}selected{% endif %}>Requested</option>
+                                            <option {% if b.status=='Confirmed' %}selected{% endif %}>Confirmed</option>
+                                            <option {% if b.status=='Completed' %}selected{% endif %}>Completed</option>
+                                            <option {% if b.status=='Cancelled' %}selected{% endif %}>Cancelled</option>
+                                        </select>
+                                        <button class="btn-outline" type="submit">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">No booking requests.</div>
+                {% endif %}
+            </div>
+
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Revisions</span>
+                        <h2>Revision <em>Queue</em></h2>
+                    </div>
+                </div>
+                {% if revisions %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Project</th>
+                                <th>Comments</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in revisions %}
+                            <tr>
+                                <td>{{ r.client_name or '—' }}</td>
+                                <td>{{ r.project_title or '—' }}</td>
+                                <td>{{ r.comments[:70] }}{% if r.comments|length > 70 %}…{% endif %}</td>
+                                <td><span class="status-badge status-{{ r.status|lower|replace(' ','-') }}">{{ r.status }}</span></td>
+                                <td>
+                                    <form method="POST" action="/admin/revisions/{{ r.id }}/update" style="display:flex;gap:8px;">
+                                        <select name="status">
+                                            <option {% if r.status=='Pending' %}selected{% endif %}>Pending</option>
+                                            <option {% if r.status=='In Review' %}selected{% endif %}>In Review</option>
+                                            <option {% if r.status=='Resolved' %}selected{% endif %}>Resolved</option>
+                                        </select>
+                                        <button class="btn-outline" type="submit">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">No revision requests.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="dashboard-grid-2">
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Files</span>
+                        <h2>Uploaded <em>Assets</em></h2>
+                    </div>
+                </div>
+                {% if files %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Project</th>
+                                <th>Title</th>
+                                <th>File</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in files %}
+                            <tr>
+                                <td>{{ f.client_name or '—' }}</td>
+                                <td>{{ f.project_title or '—' }}</td>
+                                <td>{{ f.title }}</td>
+                                <td><a href="{{ f.file_path }}" target="_blank">{{ f.filename }}</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">No uploaded files.</div>
+                {% endif %}
+            </div>
+
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Invoices</span>
+                        <h2>Billing <em>Management</em></h2>
+                    </div>
+                </div>
+                {% if invoices %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice</th>
+                                <th>Client</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Update</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in invoices %}
+                            <tr>
+                                <td>{{ i.invoice_no }}</td>
+                                <td>{{ i.client_name or '—' }}</td>
+                                <td>{{ i.amount }}</td>
+                                <td><span class="status-badge status-{{ i.status|lower|replace(' ','-') }}">{{ i.status }}</span></td>
+                                <td>
+                                    <form method="POST" action="/admin/invoices/{{ i.id }}/update" style="display:grid;gap:8px;min-width:170px;">
+                                        <select name="status">
+                                            <option {% if i.status=='Pending' %}selected{% endif %}>Pending</option>
+                                            <option {% if i.status=='Paid' %}selected{% endif %}>Paid</option>
+                                            <option {% if i.status=='Overdue' %}selected{% endif %}>Overdue</option>
+                                        </select>
+                                        <input type="date" name="due_date" value="{{ i.due_date or '' }}">
+                                        <input type="text" name="notes" value="{{ i.notes or '' }}" placeholder="Notes">
+                                        <button class="btn-outline" type="submit">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">No invoices generated.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="dashboard-grid-2">
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Manage Services</span>
+                        <h2>Services <em>CRUD</em></h2>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/services/create" class="auth-form" style="margin-bottom:24px;">
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Title</label><input type="text" name="title" required></div>
+                        <div class="form-group"><label>Icon</label><input type="text" name="icon" value="✨"></div>
+                        <div class="form-group"><label>Feature 1</label><input type="text" name="feature_1"></div>
+                        <div class="form-group"><label>Feature 2</label><input type="text" name="feature_2"></div>
+                        <div class="form-group"><label>Feature 3</label><input type="text" name="feature_3"></div>
+                        <div class="form-group"><label>Feature 4</label><input type="text" name="feature_4"></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+                    <button class="btn-primary" type="submit">Add Service</button>
+                </form>
+
+                {% for service in services %}
+                <form method="POST" action="/admin/services/{{ service.id }}/edit" class="glass-card" style="padding:18px;margin-bottom:16px;">
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Title</label><input type="text" name="title" value="{{ service.title }}"></div>
+                        <div class="form-group"><label>Icon</label><input type="text" name="icon" value="{{ service.icon }}"></div>
+                        <div class="form-group"><label>Feature 1</label><input type="text" name="feature_1" value="{{ service.feature_1 or '' }}"></div>
+                        <div class="form-group"><label>Feature 2</label><input type="text" name="feature_2" value="{{ service.feature_2 or '' }}"></div>
+                        <div class="form-group"><label>Feature 3</label><input type="text" name="feature_3" value="{{ service.feature_3 or '' }}"></div>
+                        <div class="form-group"><label>Feature 4</label><input type="text" name="feature_4" value="{{ service.feature_4 or '' }}"></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea name="description" rows="3">{{ service.description }}</textarea></div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn-primary" type="submit">Update</button>
+                </form>
+                <form method="POST" action="/admin/services/{{ service.id }}/delete">
+                    <button class="btn-outline" type="submit">Delete</button>
+                </form>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Manage Packages</span>
+                        <h2>Pricing <em>CRUD</em></h2>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/packages/create" class="auth-form" style="margin-bottom:24px;">
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Name</label><input type="text" name="name" required></div>
+                        <div class="form-group"><label>Price</label><input type="text" name="price" required></div>
+                        <div class="form-group"><label>Button Text</label><input type="text" name="button_text" value="Get Started"></div>
+                        <div class="form-group"><label><input type="checkbox" name="featured"> Featured</label></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+                    <div class="form-group"><label>Features (one per line)</label><textarea name="features" rows="4"></textarea></div>
+                    <button class="btn-primary" type="submit">Add Package</button>
+                </form>
+
+                {% for package in packages %}
+                <form method="POST" action="/admin/packages/{{ package.id }}/edit" class="glass-card" style="padding:18px;margin-bottom:16px;">
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Name</label><input type="text" name="name" value="{{ package.name }}"></div>
+                        <div class="form-group"><label>Price</label><input type="text" name="price" value="{{ package.price }}"></div>
+                        <div class="form-group"><label>Button Text</label><input type="text" name="button_text" value="{{ package.button_text }}"></div>
+                        <div class="form-group"><label><input type="checkbox" name="featured" {% if package.featured %}checked{% endif %}> Featured</label></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea name="description" rows="2">{{ package.description }}</textarea></div>
+                    <div class="form-group"><label>Features</label><textarea name="features" rows="4">{{ package.features }}</textarea></div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn-primary" type="submit">Update</button>
+                </form>
+                <form method="POST" action="/admin/packages/{{ package.id }}/delete">
+                    <button class="btn-outline" type="submit">Delete</button>
+                </form>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="dashboard-grid-2">
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Portfolio CMS</span>
+                        <h2>Portfolio <em>CRUD</em></h2>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/portfolio/create" class="auth-form" style="margin-bottom:20px;">
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Title</label><input type="text" name="title" required></div>
+                        <div class="form-group"><label>Category</label><input type="text" name="category"></div>
+                        <div class="form-group"><label>Emoji</label><input type="text" name="emoji" value="🎨"></div>
+                        <div class="form-group"><label><input type="checkbox" name="featured"> Featured</label></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+                    <button class="btn-primary" type="submit">Add Portfolio Item</button>
+                </form>
+                {% if portfolio_items %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Featured</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in portfolio_items %}
+                            <tr>
+                                <td>{{ item.title }}</td>
+                                <td>{{ item.category }}</td>
+                                <td>{{ 'Yes' if item.featured else 'No' }}</td>
+                                <td>
+                                    <form method="POST" action="/admin/portfolio/{{ item.id }}/delete">
+                                        <button class="btn-outline" type="submit">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Blog CMS</span>
+                        <h2>Blog <em>CRUD</em></h2>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/blog/create" class="auth-form" style="margin-bottom:20px;">
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Title</label><input type="text" name="title" required></div>
+                        <div class="form-group"><label>Category</label><input type="text" name="category"></div>
+                        <div class="form-group"><label>Author</label><input type="text" name="author" value="Probob Team"></div>
+                        <div class="form-group"><label>Emoji</label><input type="text" name="cover_emoji" value="📝"></div>
+                    </div>
+                    <div class="form-group"><label>Excerpt</label><textarea name="excerpt" rows="2"></textarea></div>
+                    <div class="form-group"><label>Content</label><textarea name="content" rows="5"></textarea></div>
+                    <button class="btn-primary" type="submit">Publish Post</button>
+                </form>
+                {% if blog_posts %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for post in blog_posts %}
+                            <tr>
+                                <td>{{ post.title }}</td>
+                                <td>{{ post.category }}</td>
+                                <td>{{ post.published_at[:10] }}</td>
+                                <td>
+                                    <form method="POST" action="/admin/blog/{{ post.id }}/delete">
+                                        <button class="btn-outline" type="submit">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="dashboard-grid-2">
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Testimonial CMS</span>
+                        <h2>Testimonials <em>CRUD</em></h2>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/testimonials/create" class="auth-form" style="margin-bottom:20px;">
+                    <div class="dashboard-grid-2">
+                        <div class="form-group"><label>Client Name</label><input type="text" name="client_name" required></div>
+                        <div class="form-group"><label>Company</label><input type="text" name="company"></div>
+                        <div class="form-group"><label>Rating</label><input type="number" min="1" max="5" name="rating" value="5"></div>
+                    </div>
+                    <div class="form-group"><label>Message</label><textarea name="message" rows="4"></textarea></div>
+                    <button class="btn-primary" type="submit">Add Testimonial</button>
+                </form>
+                {% if testimonials %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Company</th>
+                                <th>Rating</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in testimonials %}
+                            <tr>
+                                <td>{{ t.client_name }}</td>
+                                <td>{{ t.company }}</td>
+                                <td>{{ t.rating }}/5</td>
+                                <td>
+                                    <form method="POST" action="/admin/testimonials/{{ t.id }}/delete">
+                                        <button class="btn-outline" type="submit">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="dash-section glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Users</span>
+                        <h2>Recent <em>Accounts</em></h2>
+                    </div>
+                </div>
+                {% if users %}
+                <div class="dash-table-wrap">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr>
+                                <td>{{ u.name }}</td>
+                                <td>{{ u.email }}</td>
+                                <td>{{ u.role }}</td>
+                                <td>{{ u.created_at[:10] if u.created_at else '—' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

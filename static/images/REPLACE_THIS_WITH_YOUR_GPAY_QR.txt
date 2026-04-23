@@ -1,0 +1,12 @@
+INSTRUCTIONS:
+1. Open Google Pay app on your phone
+2. Go to Profile → My QR Code
+3. Screenshot/save the QR image
+4. Rename it to: gpay-qr.png
+5. Place it in this folder: static/images/gpay-qr.png
+6. Delete this instructions file
+
+Also update your UPI ID in:
+  - templates/payment.html  (search for YOUR_UPI_ID@okicici)
+  
+That's it! Your payment page will show your real QR code.

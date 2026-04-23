@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<section class="section admin-shell">
+  <div class="container admin-container">
+    <aside class="admin-sidebar glass-card">
+      <div>
+        <p class="section-kicker">Admin Panel</p>
+        <h2>Control Center</h2>
+        <p class="admin-subtext">Manage quotes, queues, content, billing, files, and analytics.</p>
+      </div>
+
+      <nav class="admin-nav">
+        <a href="{{ url_for('admin_panel') }}" class="{% if admin_section == 'dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="{{ url_for('admin_quotes') }}" class="{% if admin_section == 'quotes' %}active{% endif %}">Request Quote</a>
+
+        <div class="admin-group-title">Work</div>
+        <a href="{{ url_for('admin_services_page') }}" class="{% if admin_section == 'services' %}active{% endif %}">Services CRUD</a>
+        <a href="{{ url_for('admin_portfolio_page') }}" class="{% if admin_section == 'portfolio' %}active{% endif %}">Portfolio CRUD</a>
+        <a href="{{ url_for('admin_blog_page') }}" class="{% if admin_section == 'blog' %}active{% endif %}">Blog CRUD</a>
+
+        <div class="admin-group-title">Manage</div>
+        <a href="{{ url_for('admin_invoices_page') }}" class="{% if admin_section == 'invoices' %}active{% endif %}">Invoices</a>
+        <a href="{{ url_for('admin_projects_page') }}" class="{% if admin_section == 'projects' %}active{% endif %}">Projects</a>
+        <a href="{{ url_for('admin_users_page') }}" class="{% if admin_section == 'users' %}active{% endif %}">Users</a>
+        <a href="{{ url_for('admin_clients_page') }}" class="{% if admin_section == 'clients' %}active{% endif %}">Clients</a>
+        <a href="{{ url_for('admin_billing_page') }}" class="{% if admin_section == 'billing' %}active{% endif %}">Billing</a>
+        <a href="{{ url_for('admin_feedback_page') }}" class="{% if admin_section == 'feedback' %}active{% endif %}">Feedback / Reviews</a>
+        <a href="{{ url_for('admin_assets_page') }}" class="{% if admin_section == 'assets' %}active{% endif %}">Files / Assets</a>
+        <a href="{{ url_for('admin_contact_page') }}" class="{% if admin_section == 'contact' %}active{% endif %}">Contact Us</a>
+        <a href="{{ url_for('admin_analytics_page') }}" class="{% if admin_section == 'analytics' %}active{% endif %}">Analytics Dashboard</a>
+        <a href="{{ url_for('admin_view_dates') }}" class="{% if admin_section == 'view_dates' %}active{% endif %}">View Dates</a>
+        <a href="{{ url_for('admin_activity_page') }}" class="{% if admin_section == 'activity' %}active{% endif %}">Activity Log</a>
+      </nav>
+
+      <a class="btn-outline admin-back-btn" href="{{ url_for('admin_panel') }}">Back to Dashboard</a>
+    </aside>
+
+    <div class="admin-main">
+      <div class="admin-topbar glass-card">
+        <div class="admin-topbar-left">
+          <span class="section-kicker">Administration</span>
+          <h1>{% block admin_heading %}Admin Dashboard{% endblock %}</h1>
+        </div>
+        <div class="admin-topbar-right">
+          {% if admin_section != 'dashboard' %}
+          <form method="GET" class="admin-search-wrap" action="">
+            {% for key, val in request.args.items() %}
+              {% if key != 'search' and 'page' not in key %}
+                <input type="hidden" name="{{ key }}" value="{{ val }}">
+              {% endif %}
+            {% endfor %}
+            <span class="admin-search-icon">⌕</span>
+            <input type="search" name="search" class="admin-search-input" placeholder="Search records..." value="{{ request.args.get('search', '') }}" autocomplete="off">
+          </form>
+          {% endif %}
+          <div class="admin-mini-stats">
+            <div><strong>{{ admin_stats.clients }}</strong><span>Clients</span></div>
+            <div><strong>₹{{ admin_stats.revenue }}</strong><span>Revenue</span></div>
+            <div><strong>{{ admin_stats.active_projects }}</strong><span>Active Projects</span></div>
+          </div>
+        </div>
+      </div>
+      {% block admin_body %}{% endblock %}
+    </div>
+  </div>
+</section>
+
+<style>
+.admin-shell{padding-top:2rem;padding-bottom:4rem}
+.admin-container{display:grid;grid-template-columns:290px minmax(0,1fr);gap:24px;align-items:start}
+.admin-sidebar{position:sticky;top:110px;padding:24px;display:grid;gap:18px}
+.admin-subtext{color:rgba(255,255,255,.72);font-size:.95rem}
+.admin-nav{display:grid;gap:8px}
+.admin-nav a,.admin-group-title{border-radius:14px;padding:12px 14px}
+.admin-nav a{color:#fff;text-decoration:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.admin-nav a.active,.admin-nav a:hover{background:linear-gradient(135deg, rgba(238,98,255,.22), rgba(83,143,255,.22));border-color:rgba(255,255,255,.16)}
+.admin-group-title{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:#d1c4ff;padding-left:4px}
+.admin-main{display:grid;gap:22px;min-width:0}
+.admin-topbar{padding:22px 24px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.admin-topbar-left{display:grid;gap:6px}
+.admin-topbar-right{display:grid;gap:14px;justify-items:end;flex:1}
+.admin-search-wrap{position:relative;width:min(100%, 360px)}
+.admin-search-input{width:100%;padding:12px 16px 12px 42px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#fff;outline:none;box-shadow:0 12px 30px rgba(0,0,0,.12)}
+.admin-search-input::placeholder{color:rgba(255,255,255,.58)}
+.admin-search-input:focus{border-color:rgba(238,98,255,.38);background:rgba(255,255,255,.09)}
+.admin-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.68);font-size:1rem;pointer-events:none}
+.admin-mini-stats{display:grid;grid-template-columns:repeat(3, minmax(90px,1fr));gap:12px}
+.admin-mini-stats div{background:rgba(255,255,255,.05);padding:12px;border-radius:16px;text-align:center}
+.admin-mini-stats strong{display:block;font-size:1.2rem}
+.admin-mini-stats span{font-size:.83rem;color:rgba(255,255,255,.7)}
+.admin-grid-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.admin-card{padding:20px}
+.admin-card h3{margin:8px 0 6px}
+.admin-card .big{font-size:2rem;font-weight:700}
+.admin-section{padding:22px;overflow-x:auto}
+.admin-section h2{margin-bottom:16px}
+.admin-columns{display:grid;grid-template-columns:1.2fr 1fr;gap:20px}
+.table-wrap{overflow-x:auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);}
+.admin-table{width:100%;border-collapse:collapse;min-width:1000px;}
+.admin-table th,.admin-table td{padding:16px 14px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top;text-align:left; overflow: hidden; text-overflow: ellipsis;}
+.admin-table th{font-size:.85rem;color:#cfc7ff; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;}
+.admin-table tr:hover td{background: rgba(255,255,255,0.02);}
+.inline-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.inline-form select,.inline-form input,.inline-form textarea{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:10px;padding:8px 12px;font-size: 0.9rem;transition: all 0.2s; min-width: 100px;}
+.crud-form input,.crud-form textarea,.crud-form select{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:10px;padding:10px 12px;width:100%;transition: all 0.2s;}
+.inline-form select:focus, .inline-form input:focus, .crud-form input:focus, .crud-form select:focus, .crud-form textarea:focus{border-color: #56a4ff; background: rgba(255,255,255,0.08); outline: none;}
+/* Ensure dropdown options are visible regardless of browser defaults */
+.inline-form select option, .crud-form select option, select option {
+    color: #000 !important;
+    background-color: #fff !important;
+}
+.crud-form textarea{min-height:100px;resize:vertical}
+.inline-form textarea{min-height:60px;resize:vertical}
+.badge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:.82rem}
+.badge.new{background:rgba(86,164,255,.18)}
+.badge.reviewing{background:rgba(255,194,87,.18)}
+.badge.quoted{background:rgba(163,118,255,.18)}
+.badge.accepted,.badge.paid,.badge.completed,.badge.confirmed,.badge.resolved{background:rgba(63,205,128,.18)}
+.badge.rejected,.badge.failed,.badge.cancelled{background:rgba(255,102,124,.18)}
+.crud-layout{display:grid;grid-template-columns:420px minmax(0,1fr);gap:20px}
+.crud-form{padding:22px;display:grid;gap:14px}
+.form-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.admin-actions{display:flex;gap:10px;flex-wrap:wrap}
+.pagination{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:14px}
+.stacked-crud{grid-template-columns:1fr;gap:22px}
+.crud-block-header{padding:22px}
+.crud-block-title{margin-bottom:18px}
+.crud-block-header .crud-form{padding:0}
+.crud-block-header .crud-form h3{margin:0 0 4px}
+.pagination a,.pagination span{padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.05);text-decoration:none;color:#fff}
+.metric-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.chart-card{padding:20px}
+.admin-search-empty{padding:22px;border-radius:18px;margin-top:16px;text-align:center;color:rgba(255,255,255,.75);background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.12)}
+.ticker-wrap,.newsletter-section,.footer{display:none !important}
+.nav-center{display:none !important}
+.container.admin-container{max-width:1500px !important;width:100%}
+.admin-shell{min-height:100vh;padding-top:1.5rem}
+.admin-container{display:grid;grid-template-columns:280px minmax(0,1fr);gap:24px;align-items:start;max-width:1500px;margin:0 auto;padding:0 24px}
+    .admin-pdf-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 4px 10px;
+        background: rgba(212, 175, 55, 0.1);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        color: #d4af37 !important;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .admin-pdf-link:hover {
+        background: rgba(212, 175, 55, 0.2);
+        border-color: #d4af37;
+        color: #fff !important;
+        transform: translateY(-1px);
+    }
+    @media (max-width:1100px){.admin-container,.admin-columns,.crud-layout{grid-template-columns:1fr}.admin-sidebar{position:static}.admin-grid-cards,.metric-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.admin-topbar{flex-direction:column;align-items:flex-start}.admin-topbar-right{width:100%;justify-items:stretch}.admin-search-wrap{width:100%}.admin-mini-stats,.admin-grid-cards,.metric-row,.form-grid-2{grid-template-columns:1fr}}
+</style>
+
+
+{% endblock %}

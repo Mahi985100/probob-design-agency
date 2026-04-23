@@ -1,0 +1,76 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Blog{% endblock %}
+{% block admin_heading %}Blog CRUD{% endblock %}
+{% block admin_body %}
+<div class="crud-layout stacked-crud">
+  <div class="glass-card admin-section crud-block-header"><h2 class="crud-block-title">Create Blog Post</h2><form class="crud-form" method="POST" enctype="multipart/form-data" action="{% if edit_item %}{{ url_for('admin_edit_blog', post_id=edit_item.id) }}{% else %}{{ url_for('admin_create_blog') }}{% endif %}">
+    <h3>{% if edit_item %}Edit Blog Post{% else %}Create Blog Post{% endif %}</h3>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label>Post Title *</label>
+        <input type="text" name="title" placeholder="e.g. Future of UI Design" value="{{ edit_item.title if edit_item else '' }}" required>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" name="category" placeholder="e.g. Design Trends" value="{{ edit_item.category if edit_item else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Author</label>
+        <input type="text" name="author" placeholder="e.g. Probob Team" value="{{ edit_item.author if edit_item else 'Probob Team' }}">
+      </div>
+      <div class="form-group">
+        <label>Publish Date</label>
+        <input type="date" name="published_at" value="{{ edit_item.published_at[:10] if edit_item and edit_item.published_at else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Cover Emoji</label>
+        <input type="text" name="cover_emoji" placeholder="e.g. 📝" value="{{ edit_item.cover_emoji if edit_item else '📝' }}">
+      </div>
+      <div class="form-group">
+        <label>Tags (Comma separated)</label>
+        <input type="text" name="tags" placeholder="e.g. UI, UX, Design" value="{{ edit_item.tags if edit_item else '' }}">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 15px;">
+      <label>Cover Image</label>
+      <input type="file" name="image" accept="image/*">
+      {% if edit_item and edit_item.cover_image %}
+        <small style="color: var(--gold); display: block; margin-top: 5px;">Current image: <a href="{{ url_for('static', filename='uploads/' + edit_item.cover_image) }}" target="_blank" style="color: var(--gold); text-decoration: underline;">{{ edit_item.cover_image }}</a></small>
+      {% endif %}
+    </div>
+    <div class="form-group" style="margin-top: 15px;">
+      <label>Excerpt (Short Description)</label>
+      <textarea name="excerpt" rows="3" placeholder="Brief summary of the article..." style="min-height: 80px;">{{ edit_item.excerpt if edit_item else '' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label>Full Content</label>
+      <textarea name="content" rows="10" placeholder="Write your full blog post here..." style="min-height: 200px;">{{ edit_item.content if edit_item else '' }}</textarea>
+    </div>
+    <div class="admin-actions">
+      <button class="btn-primary" type="submit">{% if edit_item %}Update Post{% else %}Publish Post{% endif %}</button>
+      {% if edit_item %}<a class="btn-outline" href="{{ url_for('admin_blog_page') }}">Cancel Edit</a>{% endif %}
+    </div>
+  </form></div>
+  <div class="glass-card admin-section">
+    <h2>Blog Records</h2>
+    <div class="table-wrap"><table class="admin-table"><thead><tr><th>Image</th>
+                <th>Title</th><th>Category</th><th>Author</th><th>Date</th><th>Actions</th></tr></thead><tbody>
+      {% for item in blog_posts['items'] %}
+      <tr>
+        <td>{{ item.cover_emoji }} {{ item.title }}</td>
+        <td>{{ item.category }}</td>
+        <td>{{ item.author }}</td>
+        <td>{{ item.published_at[:10] if item.published_at else '—' }}</td>
+        <td><div class="admin-actions"><a class="btn-outline" href="{{ url_for('admin_edit_blog', post_id=item.id) }}">Edit</a><form method="POST" enctype="multipart/form-data" action="{{ url_for('admin_delete_blog', post_id=item.id) }}"><button class="btn-outline" type="submit">Delete</button></form></div></td>
+      </tr>
+      {% else %}<tr><td colspan="5">No blog posts yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  <div class="pagination">
+    {% if blog_posts['has_prev'] %}<a href="{{ url_for('admin_blog_page', page=blog_posts['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ blog_posts['page'] }} / {{ blog_posts['pages'] }}</span>
+    {% if blog_posts['has_next'] %}<a href="{{ url_for('admin_blog_page', page=blog_posts['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+
+  </div>
+</div>
+{% endblock %}

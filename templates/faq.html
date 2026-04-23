@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}FAQ{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <span class="section-kicker">Questions & Answers</span>
+        <h1>FAQ</h1>
+        <p>Everything you need to know before we start.</p>
+    </div>
+</div>
+<section class="section">
+    <div class="container narrow">
+        <div class="faq-list">
+            {% for item in faqs %}
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>{{ item.q }}</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <p>{{ item.a }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="faq-cta">
+            <h3>Still have questions?</h3>
+            <p>We're happy to chat about your project anytime.</p>
+            <a href="/contact" class="btn-primary">Get in Touch →</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

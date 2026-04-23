@@ -1,0 +1,32 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Activity{% endblock %}
+{% block admin_heading %}Activity Log{% endblock %}
+{% block admin_body %}
+<div class="glass-card admin-section">
+  <h2>Latest Platform Activity</h2>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>When</th><th>User</th><th>Area</th><th>Action</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for log in logs['items'] %}
+        <tr>
+          <td>{{ log.created_at[:19].replace('T', ' ') if log.created_at else '—' }}</td>
+          <td>{{ log.actor_name or 'System' }}<br>{{ log.actor_email or '—' }}</td>
+          <td><span class="badge">{{ log.area }}</span></td>
+          <td>{{ log.action }}</td>
+          <td>{{ log.details or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">No activity found yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    {% if logs['has_prev'] %}<a href="{{ url_for('admin_activity_page', page=logs['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ logs['page'] }} / {{ logs['pages'] }}</span>
+    {% if logs['has_next'] %}<a href="{{ url_for('admin_activity_page', page=logs['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'admin_base.html' %}
+{% block title %}Client Management{% endblock %}
+{% block admin_heading %}Client Insights{% endblock %}
+
+{% block admin_body %}
+<div class="glass-card admin-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <span class="panel-kicker">CRM & Retention</span>
+            <h2>Client <em>Activity</em></h2>
+            <p class="admin-subtext">Comprehensive overview of client projects, billing, and lifetime value.</p>
+        </div>
+        <div class="admin-mini-stats">
+            <div>
+                <strong>{{ clients['total'] }}</strong>
+                <span>Total Clients</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Projects</th>
+                    <th>Invoices</th>
+                    <th>Total Paid</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients['items'] %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #d1c4ff;">
+                                {{ client.name[0]|upper if client.name else '?' }}
+                            </div>
+                            <div>
+                                <strong>{{ client.name }}</strong><br>
+                                <small style="color: rgba(255,255,255,0.6);">{{ client.email }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: grid; gap: 4px;">
+                            <strong>{{ client.total_projects }} Total</strong>
+                            <div style="display: flex; gap: 8px; font-size: 0.75rem;">
+                                <span style="color: #3fcd80;">{{ client.completed_projects }} Done</span>
+                                <span style="color: #56a4ff;">{{ client.active_projects }} Active</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: grid; gap: 4px;">
+                            <strong>{{ client.total_invoices }} Invoices</strong>
+                            <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">LTV: Ongoing</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-size: 1.1rem; font-weight: 700; color: #3fcd80;">₹{{ client.total_payments }}</span>
+                    </td>
+                    <td>
+                        {% if client.active_projects > 0 %}
+                        <span class="badge new">Active Client</span>
+                        {% elif client.total_projects > 0 %}
+                        <span class="badge completed">Past Client</span>
+                        {% else %}
+                        <span class="badge reviewing">New Lead</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="admin-search-empty">No clients found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        {% if clients['has_prev'] %}
+        <a href="{{ url_for('admin_clients_page', page=clients['prev_page'], search=request.args.get('search', '')) }}">Prev</a>
+        {% endif %}
+        <span>Page {{ clients['page'] }} / {{ clients['pages'] }}</span>
+        {% if clients['has_next'] %}
+        <a href="{{ url_for('admin_clients_page', page=clients['next_page'], search=request.args.get('search', '')) }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

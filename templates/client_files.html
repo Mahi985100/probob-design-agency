@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Project Files{% endblock %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<div class="page-hero compact dashboard-hero-bg"><div class="container"><span class="section-kicker">Client Files</span><h1>Upload Project Assets</h1><p>Upload logos, references, briefs, payment proofs, or any design inputs.</p></div></div>
+<section class="section"><div class="container">
+    <div class="dashboard-grid-2">
+        <div class="dash-section glass-card">
+            <div class="panel-head"><div><span class="panel-kicker">Upload</span><h2>Send <em>Files</em></h2></div></div>
+            <form method="POST" enctype="multipart/form-data" class="auth-form">
+                <div class="form-group"><label>Project</label><select name="project_id" required>{% for project in projects %}<option value="{{ project.id }}">{{ project.title }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label>File Title</label><input type="text" name="title" placeholder="Brand logo references"></div>
+                <div class="form-group"><label>Choose File</label><input type="file" name="file" required></div>
+                <button class="btn-primary" type="submit">Upload File</button>
+            </form>
+        </div>
+        <div class="dash-section glass-card">
+            <div class="panel-head"><div><span class="panel-kicker">History</span><h2>Uploaded <em>Files</em></h2></div></div>
+            {% if files %}
+            <div class="dash-table-wrap"><table class="dash-table"><thead><tr><th>Project</th><th>Title</th><th>File</th><th>Type</th><th>Date</th></tr></thead><tbody>{% for item in files %}<tr><td>{{ item.project_title or '—' }}</td><td>{{ item.title }}</td><td><a href="{{ item.file_path }}" target="_blank">{{ item.filename }}</a></td><td>{{ item.file_type }}</td><td>{{ item.created_at[:10] }}</td></tr>{% endfor %}</tbody></table></div>
+            {% else %}<div class="empty-state">No files uploaded yet.</div>{% endif %}
+        </div>
+    </div>
+</div></section>
+{% endblock %}

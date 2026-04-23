@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Probob Design Studio{% endblock %} — Premium Creative Agency</title>
+    <meta name="description" content="Probob Design Studio — creative agency website with client onboarding, bookings, uploads, revisions, invoices, and admin workflows.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/polling.js') }}"></script>
+</head>
+<body>
+<div class="ticker-wrap">
+    <div class="ticker-track">
+        <span>✦ Probob Design Studio</span>
+        <span>🔥 Real-world client portal enabled</span>
+        <span>✦ Start Project · Book Consultation · Upload Files</span>
+        <span>📦 Packaging · Branding · Web · Social Media</span>
+        <span>🚀 Creative workflows with admin dashboard</span>
+        <span>✦ Probob Design Studio</span>
+        <span>🔥 Real-world client portal enabled</span>
+        <span>✦ Start Project · Book Consultation · Upload Files</span>
+        <span>📦 Packaging · Branding · Web · Social Media</span>
+        <span>🚀 Creative workflows with admin dashboard</span>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">
+          <span>{{ message }}</span>
+          <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<nav class="navbar" id="navbar">
+    <a href="/" class="nav-logo">PROBOB<span class="logo-dot">.</span></a>
+    <div class="nav-center">
+        <a href="/portfolio" class="nav-link">Work</a>
+        <a href="/services" class="nav-link">Services</a>
+        <a href="/about" class="nav-link">About</a>
+        <a href="/blog" class="nav-link">Blog</a>
+        <a href="/contact" class="nav-link">Contact</a>
+        {% if current_user and current_user.role != 'admin' %}
+        <a href="/start-project" class="nav-link">Start Project</a>
+        {% endif %}
+    </div>
+    <div class="nav-right">
+        {% if current_user %}
+            {% if current_user.role == 'admin' %}
+                <a href="/admin" class="btn-nav-outline">Admin</a>
+            {% else %}
+                <a href="/profile" class="btn-nav-outline">Profile</a>
+                <a href="/dashboard" class="btn-nav-outline">Dashboard</a>
+                <a href="/book-consultation" class="btn-nav-solid">Book Call</a>
+            {% endif %}
+            {% if current_user.role != 'admin' %}
+            <div class="notif-dropdown">
+                <a href="{{ url_for('notifications_page') }}" class="btn-nav-outline notif-bell">🔔{% if notif_unread_count %}<span class="notif-pill">{{ notif_unread_count }}</span>{% endif %}</a>
+                <div class="notif-menu glass-card">
+                    <div class="notif-menu-head">
+                        <strong>Notifications</strong>
+                        <a href="{{ url_for('notifications_page') }}">View all</a>
+                    </div>
+                    {% if notif_preview %}
+                        {% for item in notif_preview %}
+                        <a class="notif-item {% if not item.is_read %}unread{% endif %}" href="{{ url_for('open_notification', notification_id=item.id) }}">
+                            <strong>{{ item.title }}</strong>
+                            <span>{{ item.created_at[:10] }}</span>
+                            <small>{{ item.message }}</small>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="notif-empty">No notifications yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <a href="/logout" class="btn-nav-outline">Logout</a>
+        {% else %}
+            <a href="/login" class="btn-nav-outline">Login</a>
+            <a href="/signup" class="btn-nav-solid">Get Started</a>
+        {% endif %}
+        <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-links">
+        <a href="/">Home</a>
+        <a href="/portfolio">Portfolio</a>
+        <a href="/services">Services</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/about">About</a>
+        <a href="/blog">Blog</a>
+        <a href="/contact">Contact</a>
+        {% if current_user %}
+            {% if current_user.role == 'admin' %}<a href="/admin">Admin Dashboard</a>{% else %}
+            <a href="/profile">My Profile</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/start-project">Start Project</a>
+            <a href="/book-consultation">Book Consultation</a>
+            <a href="/client/files">Upload Files</a>
+            <a href="/client/revisions">Revisions</a>
+            {% endif %}
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+            <a href="/signup">Sign Up</a>
+        {% endif %}
+    </div>
+</div>
+
+{% block content %}{% endblock %}
+
+{% block newsletter %}
+<section class="newsletter-section">
+    <div class="nl-inner">
+        <div class="nl-text">
+            <h2>Stay <em>Inspired</em></h2>
+            <p>Design trends, project stories, and creative insights delivered monthly.</p>
+        </div>
+        <form class="nl-form" action="/newsletter/subscribe" method="POST">
+            <input type="email" name="email" placeholder="your@email.com" required>
+            <button type="submit">Subscribe</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <div class="footer-logo">PROBOB<span class="logo-dot">.</span></div>
+            <p>Branding, packaging, web, social media, and business-ready design workflows for modern clients.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Services</h4>
+            <ul>
+                <li><a href="/services">Our Services</a></li>
+                <li><a href="/start-project">Start a Project</a></li>
+                <li><a href="/book-consultation">Consultation</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Client Portal</h4>
+            <ul>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/client/files">File Uploads</a></li>
+                <li><a href="/client/revisions">Revisions</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <ul>
+                <li><a href="/about">About</a></li>
+                <li><a href="/blog">Blog</a></li>
+                <li><a href="/faq">FAQ</a></li>
+                <li><a href="/contact">Contact</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Socials</h4>
+            <div class="social-icons" style="display: flex; gap: 15px; margin-top: 10px;">
+                <a href="https://www.instagram.com/probobdesign?igsh=MWNlNzZiN242MGhrMQ==" target="_blank" rel="noopener noreferrer" style="color: inherit;" title="Instagram">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                </a>
+                <a href="https://www.linkedin.com/company/probob/" target="_blank" rel="noopener noreferrer" style="color: inherit;" title="LinkedIn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                        <rect x="2" y="9" width="4" height="12"></rect>
+                        <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        <div class="footer-col">
+            <h4>Get in Touch</h4>
+            <p class="footer-contact-line">✉ info@probobdesign.com</p>
+            <p class="footer-contact-line">☎ +91 95102 05753</p>
+            <p class="footer-contact-line">📍 Shahibaug, Ahmedabad</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2026 Probob Design Studio. All rights reserved.</span>
+        <span>Built with client onboarding, booking, files, revisions, and invoice workflow.</span>
+    </div>
+</footer>
+
+{% if play_login_sound %}
+<audio id="loginNotificationSound" preload="auto">
+    <source src="{{ url_for('static', filename='sounds/notification.mp3') }}" type="audio/mpeg">
+</audio>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sound = document.getElementById('loginNotificationSound');
+    if (!sound) return;
+    sound.play().catch(() => {
+        document.addEventListener('click', function handleFirstClick() {
+            sound.play().catch(() => {});
+        }, { once: true });
+    });
+});
+</script>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

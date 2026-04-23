@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Careers{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <span class="section-kicker">Join the Team</span>
+        <h1>Careers</h1>
+        <p>Create extraordinary work with an extraordinary team.</p>
+    </div>
+</div>
+<section class="section">
+    <div class="container">
+        <div class="careers-layout">
+            <div class="jobs-panel">
+                <h2>Open <em>Positions</em></h2>
+                <div class="job-list">
+                    {% for job in jobs %}
+                    <div class="job-card" data-job="{{ job.title }}">
+                        <div class="job-icon">{{ job.icon }}</div>
+                        <div class="job-info">
+                            <h3>{{ job.title }}</h3>
+                            <div class="job-meta">
+                                <span>📍 {{ job.location }}</span>
+                                <span>⏰ {{ job.type }}</span>
+                            </div>
+                        </div>
+                        <button class="btn-outline apply-trigger" data-title="{{ job.title }}">Apply</button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="apply-panel" id="applyPanel">
+                <h2>Apply <em>Now</em></h2>
+                <form action="/careers" method="POST" class="apply-form">
+                    <div class="form-group">
+                        <label>Position</label>
+                        <input type="text" name="job_title" id="jobTitleInput" placeholder="Select a position" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Your Name *</label>
+                            <input type="text" name="name" placeholder="Full Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" name="email" placeholder="you@email.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Portfolio / Website URL</label>
+                        <input type="url" name="portfolio_url" placeholder="https://yourportfolio.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Cover Letter</label>
+                        <textarea name="cover_letter" rows="5" placeholder="Tell us why you'd be a great fit..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary full-width">Submit Application →</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

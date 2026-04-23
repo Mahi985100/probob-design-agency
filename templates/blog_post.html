@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+<div class="page-hero compact">
+    <div class="container">
+        <span class="section-kicker"><a href="/blog">← Back to Blog</a></span>
+        <span class="blog-category-tag">{{ post.category }}</span>
+        <h1>{{ post.title }}</h1>
+        <div class="blog-post-meta">
+            <span>By {{ post.author }}</span>
+            <span>·</span>
+            <span>{{ post.published_at[:10] if post.published_at else '' }}</span>
+            <span>·</span>
+            <span style="color: var(--accent-1);">{{ post.read_time }}</span>
+        </div>
+    </div>
+</div>
+<section class="section">
+    <div class="container narrow">
+        <div class="blog-post-cover">
+            <div class="blog-post-emoji">{{ post.cover_emoji }}</div>
+        </div>
+        <div class="blog-post-content">
+            {% if post.content %}
+                {{ post.content }}
+            {% else %}
+                <p>{{ post.excerpt }}</p>
+                <p>This is a full article about <strong>{{ post.title }}</strong>. Stay tuned for the complete content coming soon.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Social Interaction & Sharing -->
+        <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 50px; padding-top: 30px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 20px;">
+                <button onclick="likePost({{ post.id }}, this)" class="btn-outline" style="display: flex; align-items: center; gap: 8px; {% if user_liked %}border-color: var(--accent-1); color: var(--accent-1);{% endif %}">
+                    <span class="like-icon">{% if user_liked %}❤️{% else %}🤍{% endif %}</span>
+                    <span class="like-count">{{ likes_count }}</span>
+                </button>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <span style="color: var(--text-3); font-size: 0.8rem; text-transform: uppercase;">Share:</span>
+                <a href="https://twitter.com/intent/tweet?text={{ post.title }}&url={{ request.url }}" target="_blank" class="btn-outline" style="padding: 5px 10px;">Twitter</a>
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.url }}" target="_blank" class="btn-outline" style="padding: 5px 10px;">LinkedIn</a>
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div style="margin-top: 50px;">
+            <h3 style="margin-bottom: 25px;">Comments ({{ comments|length }})</h3>
+            {% if current_user %}
+            <form method="POST" action="{{ url_for('blog_comment', post_id=post.id) }}" style="margin-bottom: 40px;">
+                <textarea name="comment" class="form-input" style="width: 100%; height: 100px; margin-bottom: 15px;" placeholder="Share your thoughts..." required></textarea>
+                <button type="submit" class="btn-primary">Post Comment</button>
+            </form>
+            {% else %}
+            <div class="glass-card" style="padding: 20px; text-align: center; margin-bottom: 40px;">
+                <p style="color: var(--text-2);">Please <a href="/login" style="color: var(--accent-1);">login</a> to join the conversation.</p>
+            </div>
+            {% endif %}
+
+            <div class="metric-list">
+                {% for c in comments %}
+                <div class="metric-item">
+                    <div class="metric-row">
+                        <strong>{{ c.user_name }}</strong>
+                        <span style="font-size: 0.8rem; color: var(--text-3);">{{ c.created_at[:10] }}</span>
+                    </div>
+                    <p style="margin-top: 10px; color: var(--text-1); line-height: 1.6;">{{ c.comment }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="blog-post-footer" style="margin-top: 60px;">
+            <a href="/blog" class="btn-ghost">← All Articles</a>
+        </div>
+    </div>
+</section>
+
+<script>
+function likePost(postId, btn) {
+    fetch(`/blog/${postId}/like`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+        const icon = btn.querySelector('.like-icon');
+        const count = btn.querySelector('.like-count');
+        if (data.status === 'liked') {
+            btn.style.borderColor = 'var(--accent-1)';
+            btn.style.color = 'var(--accent-1)';
+            icon.innerText = '❤️';
+            count.innerText = parseInt(count.innerText) + 1;
+        } else {
+            btn.style.borderColor = 'rgba(255,255,255,0.1)';
+            btn.style.color = 'white';
+            icon.innerText = '🤍';
+            count.innerText = parseInt(count.innerText) - 1;
+        }
+    });
+}
+</script>
+{% endblock %}

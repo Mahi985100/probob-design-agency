@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Make Payment{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <span class="section-kicker">Secure Payment</span>
+        <h1>Complete Your Payment</h1>
+        <p>Pay securely using Razorpay — UPI, Cards, Net Banking & more.</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container narrow">
+
+        <div class="payment-summary-card">
+            <h3>📋 Order Summary</h3>
+            <div class="summary-row">
+                <span>Client Name</span>
+                <strong>{{ order.name }}</strong>
+            </div>
+            <div class="summary-row">
+                <span>Email</span>
+                <strong>{{ order.email }}</strong>
+            </div>
+            <div class="summary-row">
+                <span>Service</span>
+                <strong>{{ order.service }}</strong>
+            </div>
+            <div class="summary-row">
+                <span>Project Details</span>
+                <strong>{{ order.project }}</strong>
+            </div>
+            <div class="summary-row total-row">
+                <span>Amount</span>
+                <strong>₹{{ order.amount }}</strong>
+            </div>
+        </div>
+
+        <div class="payment-box">
+            <div class="payment-box-header">
+                <span class="pay-badge">Razorpay — Secure Checkout</span>
+                <h2>Pay Now</h2>
+                <p>UPI, Cards, Net Banking, Wallets — all supported</p>
+            </div>
+
+            <button type="button" id="rzp-pay-btn" class="btn-confirm-pay" style="width:100%; font-size:1.1rem; padding: 18px; margin-bottom: 20px;">
+                🔒 Pay ₹{{ order.amount }} via Razorpay (UPI/Card)
+            </button>
+
+            <div style="text-align: center; margin: 10px 0; position: relative;">
+                <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+                <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--surface); padding: 0 15px; color: var(--text-2); font-size: 0.9rem;">OR</span>
+            </div>
+
+            <div id="manual-payment-section" style="margin-top: 20px; background: var(--surface-2); padding: 20px; border-radius: 12px; text-align: center; border: 1px dashed var(--gold);">
+                <h3>Scan to Pay via UPI</h3>
+                <p style="margin-top: 10px; color: var(--text-2);">Use any UPI app (GPay, PhonePe, Paytm) to scan the QR code.</p>
+                <div style="margin: 20px auto; background: white; padding: 10px; display: inline-block; border-radius: 8px;">
+                    <img src="{{ url_for('static', filename='images/gpay-qr.png') }}" alt="UPI QR Code" style="max-width: 200px; height: auto;">
+                </div>
+                <p style="font-size: 1.2rem;"><strong>Amount: ₹{{ order.amount }}</strong></p>
+                
+                <div style="margin-top: 20px; text-align: left;">
+                    <label for="utr_number" style="font-weight: bold; margin-bottom: 5px; display: block; color: var(--text);">Enter 12-digit UTR/Reference No. *</label>
+                    <input type="text" id="utr_number" maxlength="12" placeholder="e.g. 312345678910" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: var(--surface); color: var(--text);">
+                </div>
+
+                <button type="button" id="manual-confirm-btn" class="btn-primary" style="margin-top: 20px; width: 100%;">Authenticate & Verify UPI Payment</button>
+            </div>
+        </div>
+
+        <div class="pay-steps">
+            <div class="pay-step">
+                <span class="step-num">1</span>
+                <p>Choose Razorpay or Scan UPI QR</p>
+            </div>
+            <div class="pay-step">
+                <span class="step-num">2</span>
+                <p>Complete payment securely</p>
+            </div>
+            <div class="pay-step">
+                <span class="step-num">3</span>
+                <p>Enter UTR if paying via QR</p>
+            </div>
+            <div class="pay-step">
+                <span class="step-num">4</span>
+                <p>Receipt is downloaded automatically ✅</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('rzp-pay-btn').onclick = function(e) {
+    if (!"{{ order.razorpay_key_id }}") {
+        alert("Payment gateway is not configured. Please use manual UPI.");
+        return;
+    }
+    var options = {
+        key: "{{ order.razorpay_key_id }}",
+        amount: "{{ order.amount * 100 }}",
+        currency: "{{ order.currency }}",
+        name: "Probob Design Studio",
+        description: "{{ order.service }}",
+        order_id: "{{ order.razorpay_order_id }}",
+        handler: function(response) {
+            var btn = document.getElementById('rzp-pay-btn');
+            btn.textContent = '⏳ Authenticating...';
+            btn.disabled = true;
+
+            fetch("{{ url_for('verify_payment') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature,
+                    receipt_no: "{{ order.receipt_no }}"
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = "/receipt/" + data.receipt_no + "?download=1";
+                } else {
+                    alert("Authentication failed: " + (data.message || "Please contact support."));
+                    btn.textContent = '🔒 Pay ₹{{ order.amount }} Securely';
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert("Something went wrong during authentication.");
+                btn.textContent = '🔒 Pay ₹{{ order.amount }} Securely';
+                btn.disabled = false;
+            });
+        },
+        prefill: {
+            name: "{{ order.name }}",
+            email: "{{ order.email }}",
+            contact: "{{ order.phone }}"
+        },
+        theme: { color: "#d4af37" },
+        modal: {
+            ondismiss: function() {
+                var btn = document.getElementById('rzp-pay-btn');
+                btn.textContent = '🔒 Pay ₹{{ order.amount }} Securely';
+                btn.disabled = false;
+            }
+        }
+    };
+
+    var rzp = new Razorpay(options);
+    rzp.open();
+    e.preventDefault();
+};
+
+document.getElementById('manual-confirm-btn').onclick = function() {
+    var utr = document.getElementById('utr_number').value.trim();
+    if (utr.length < 12) {
+        alert("Please enter a valid 12-digit UTR/Reference No. to authenticate your payment.");
+        return;
+    }
+
+    var btn = document.getElementById('manual-confirm-btn');
+    var originalText = btn.textContent;
+    btn.textContent = '⏳ Authenticating UPI Reference...';
+    btn.disabled = true;
+
+    fetch("{{ url_for('verify_payment') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            receipt_no: "{{ order.receipt_no }}",
+            utr_number: utr
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = "/receipt/" + data.receipt_no + "?download=1";
+        } else {
+            alert("Verification failed. Please ensure the UTR is correct or contact support.");
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(err => {
+        alert("Connection error. Please try again.");
+        btn.textContent = originalText;
+        btn.disabled = false;
+    });
+};
+</script>
+</script>
+{% endblock %}

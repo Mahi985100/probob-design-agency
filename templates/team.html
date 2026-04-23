@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Team{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <span class="section-kicker">The People</span>
+        <h1>Our Team</h1>
+        <p>A collective of designers, thinkers, and makers.</p>
+    </div>
+</div>
+<section class="section">
+    <div class="container">
+        <div class="team-grid">
+            <div class="team-card">
+                <div class="team-avatar">
+                    <img src="{{ url_for('static', filename='images/team/raj.jpg') }}" alt="Raj Bhatt" onerror="this.style.display='none'; this.parentElement.innerHTML='RB';">
+                </div>
+                <h3>Raj Bhatt</h3>
+                <p class="team-role">Founder & Creative Director</p>
+                <p>8+ years leading brand strategy and visual design for global clients.</p>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">
+                    <img src="{{ url_for('static', filename='images/team/ananya.jpg') }}" alt="Ananya Patel" onerror="this.style.display='none'; this.parentElement.innerHTML='AP';">
+                </div>
+                <h3>Ananya Patel</h3>
+                <p class="team-role">Lead UI/UX Designer</p>
+                <p>Specialist in user research and product design for fintech and health apps.</p>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">
+                    <img src="{{ url_for('static', filename='images/team/karan.jpg') }}" alt="Karan Shah" onerror="this.style.display='none'; this.parentElement.innerHTML='KS';">
+                </div>
+                <h3>Karan Shah</h3>
+                <p class="team-role">Motion Graphics Lead</p>
+                <p>Cinema4D and After Effects wizard behind our most-watched brand films.</p>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">
+                    <img src="{{ url_for('static', filename='images/team/nisha.jpg') }}" alt="Nisha Mehta" onerror="this.style.display='none'; this.parentElement.innerHTML='NM';">
+                </div>
+                <h3>Nisha Mehta</h3>
+                <p class="team-role">Brand Strategist</p>
+                <p>Turns complex brand problems into clear, compelling visual narratives.</p>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">
+                    <img src="{{ url_for('static', filename='images/team/vivek.jpg') }}" alt="Vivek Desai" onerror="this.style.display='none'; this.parentElement.innerHTML='VD';">
+                </div>
+                <h3>Vivek Desai</h3>
+                <p class="team-role">Senior Graphic Designer</p>
+                <p>Print and packaging specialist with a love for typographic precision.</p>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar">
+                    <img src="{{ url_for('static', filename='images/team/pooja.jpg') }}" alt="Pooja Joshi" onerror="this.style.display='none'; this.parentElement.innerHTML='PJ';">
+                </div>
+                <h3>Pooja Joshi</h3>
+                <p class="team-role">Web Designer</p>
+                <p>Designs and builds high-performance websites in Figma, Webflow, and Framer.</p>
+            </div>
+        </div>
+
+        <style>
+            .team-avatar {
+                width: 100px;
+                height: 100px;
+                overflow: hidden;
+                background: var(--gold-dim);
+                border: 2px solid var(--gold);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Cinzel', serif;
+                font-weight: 700;
+                font-size: 24px;
+                color: var(--gold);
+                margin: 0 auto 20px;
+                border-radius: 50%;
+                box-shadow: 0 0 20px rgba(201, 168, 76, 0.2);
+            }
+            .team-avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        </style>
+        <div class="team-cta">
+            <p>Interested in joining us?</p>
+            <a href="/careers" class="btn-primary">View Open Positions →</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

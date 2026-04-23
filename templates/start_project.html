@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Start Project{% endblock %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<div class="page-hero compact dashboard-hero-bg">
+    <div class="container">
+        <span class="section-kicker">Client Onboarding</span>
+        <h1>Start a Project</h1>
+        <p>Submit your design brief, budget, and timeline. This creates a quote request for the admin team.</p>
+    </div>
+</div>
+<section class="section">
+    <div class="container narrow-container">
+        <form method="POST" class="auth-form glass-card">
+            <div class="dashboard-grid-2">
+                <div class="form-group"><label>Client Name *</label><input type="text" name="client_name" value="{{ user.name }}" required></div>
+                <div class="form-group"><label>Email *</label><input type="email" name="email" value="{{ user.email }}" required></div>
+                <div class="form-group"><label>Phone</label><input type="text" name="phone"></div>
+                <div class="form-group"><label>Company</label><input type="text" name="company"></div>
+                <div class="form-group"><label>Service *</label><select name="service" required>{% for s in services %}<option value="{{ s.title }}">{{ s.title }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label>Budget Range</label><input type="text" name="budget_range" placeholder="₹10k - ₹50k"></div>
+                <div class="form-group"><label>Deadline</label><input type="date" name="deadline"></div>
+                <div class="form-group"><label>Business Type</label><input type="text" name="business_type" placeholder="Startup / FMCG / Retail"></div>
+            </div>
+            <div class="form-group"><label>Project Description *</label><textarea name="project_description" rows="6" placeholder="Tell us exactly what you need, target audience, style references, and deliverables." required></textarea></div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="btn-primary" type="submit">Submit Quote Request</button>
+                <a href="/dashboard" class="btn-outline">Back to Dashboard</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

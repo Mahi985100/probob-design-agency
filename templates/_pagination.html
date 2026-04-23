@@ -1,0 +1,11 @@
+{% if pager['pages'] > 1 %}
+<div class="pagination">
+  {% if pager['has_prev'] %}
+    <a href="{{ url_for(endpoint, page=pager['prev_page']) }}">Prev</a>
+  {% endif %}
+  <span>Page {{ pager['page'] }} / {{ pager['pages'] }}</span>
+  {% if pager['has_next'] %}
+    <a href="{{ url_for(endpoint, page=pager['next_page']) }}">Next</a>
+  {% endif %}
+</div>
+{% endif %}

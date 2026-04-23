@@ -1,0 +1,103 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Billing{% endblock %}
+{% block admin_heading %}Billing Records{% endblock %}
+{% block admin_body %}
+<div class="glass-card admin-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+    <div>
+      <h2 style="margin-bottom:6px;">Payments / Billing</h2>
+      <p class="admin-subtext" style="margin:0;">Add real billing records here. New entries appear at the top and update revenue when marked paid or received.</p>
+    </div>
+    <button class="btn-primary" type="button" onclick="const form=document.getElementById('newBillForm'); form.style.display=form.style.display==='none'?'grid':'none';">Record New Bill</button>
+  </div>
+
+  <form id="newBillForm" method="POST" action="{{ url_for('admin_create_payment') }}" class="crud-form" style="display:none;padding:18px;margin-bottom:18px;">
+    <div class="form-grid-2">
+      <div>
+        <label>Client Name</label>
+        <input type="text" name="name" required>
+      </div>
+      <div>
+        <label>Client Email</label>
+        <input type="email" name="email">
+      </div>
+      <div>
+        <label>Phone</label>
+        <input type="text" name="phone">
+      </div>
+      <div>
+        <label>Amount (₹)</label>
+        <input type="number" name="amount" min="0" step="1" required>
+      </div>
+      <div>
+        <label>Service</label>
+        <input type="text" name="service" required>
+      </div>
+      <div>
+        <label>Project</label>
+        <input type="text" name="project">
+      </div>
+      <div>
+        <label>Status</label>
+        <select name="status">
+          {% for s in ['created','paid','received','failed','refunded'] %}
+          <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Date</label>
+        <input type="date" name="date_str">
+      </div>
+      <div>
+        <label>Link to Invoice</label>
+        <select name="invoice_id">
+          <option value="">No Invoice Link</option>
+          {% for inv in invoices %}
+          <option value="{{ inv.id }}">{{ inv.invoice_no }} - {{ inv.title }} (₹{{ inv.balance_amount or inv.amount }})</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="admin-actions"><button class="btn-primary" type="submit">Save Bill</button></div>
+  </form>
+
+  <div class="table-wrap"><table class="admin-table"><thead><tr><th>Receipt</th><th>Client</th><th>Service</th><th>Amount</th><th>Status</th><th>Update</th></tr></thead><tbody>
+    {% for item in payments['items'] %}
+    <tr>
+      <td>
+        <strong>{{ item.receipt_no }}</strong>
+        {% if item.invoice_id %}
+        <br>
+        <a href="{{ url_for('download_invoice_pdf', invoice_id=item.invoice_id) }}" class="admin-pdf-link" style="padding: 2px 6px; font-size: 0.7rem; margin-top: 6px;">
+            📄 Invoice PDF
+        </a>
+        {% endif %}
+      </td>
+      <td>{{ item.name or '—' }}<br>{{ item.email or '—' }}</td>
+      <td>{{ item.service or '—' }}<br>{{ item.project or '—' }}</td>
+      <td>₹{{ item.amount or 0 }}</td>
+      <td>
+        <span class="badge {{ item.status|lower }}">{{ item.status }}</span>
+      </td>
+      <td>
+        <form method="POST" action="{{ url_for('admin_update_payment', payment_id=item.id) }}" class="inline-form">
+          <select name="status">
+            {% for s in ['created','paid','received','failed','refunded'] %}
+            <option value="{{ s }}" {% if item.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn-outline" type="submit">Save</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}<tr><td colspan="6">No billing records yet.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <div class="pagination">
+    {% if payments['has_prev'] %}<a href="{{ url_for('admin_billing_page', page=payments['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ payments['page'] }} / {{ payments['pages'] }}</span>
+    {% if payments['has_next'] %}<a href="{{ url_for('admin_billing_page', page=payments['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+
+</div>
+{% endblock %}

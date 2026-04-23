@@ -1,0 +1,90 @@
+{% extends 'admin_base.html' %}
+{% block title %}Feedback Management{% endblock %}
+{% block admin_heading %}User Reviews{% endblock %}
+
+{% block admin_body %}
+<div class="glass-card admin-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <span class="panel-kicker">Social Proof</span>
+            <h2>Manage <em>Feedback</em></h2>
+            <p class="admin-subtext">Review user submissions, moderate content, and feature the best stories.</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <form method="GET" action="{{ url_for('admin_feedback_page') }}" style="display: flex; gap: 8px;">
+                <select name="rating" onchange="this.form.submit()" style="padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <option value="">All Ratings</option>
+                    {% for i in range(5, 0, -1) %}
+                    <option value="{{ i }}" {% if request.args.get('rating') == i|string %}selected{% endif %}>{{ i }} Stars</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="search" value="{{ request.args.get('search', '') }}" placeholder="Search reviews..." style="padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1);">
+            </form>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Review</th>
+                    <th>Rating</th>
+                    <th>Status / Feature</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in feedbacks['items'] %}
+                <tr>
+                    <td>
+                        <strong>{{ item.client_name }}</strong><br>
+                        <small style="color: rgba(255,255,255,0.6);">{{ item.company or 'No Company' }}</small>
+                    </td>
+                    <td style="max-width: 300px;">
+                        <p style="font-size: 0.9rem; margin: 0; white-space: normal; line-height: 1.4;">{{ item.message }}</p>
+                    </td>
+                    <td>
+                        <div style="color: #ffc257;">
+                            {% for i in range(item.rating) %}★{% endfor %}
+                        </div>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_update_feedback', feedback_id=item.id, page=feedbacks['page'], search=request.args.get('search', '')) }}" id="form-{{ item.id }}">
+                            <select name="status" onchange="this.form.submit()" style="margin-bottom: 8px; display: block; width: 100%;">
+                                <option value="pending" {% if item.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="approved" {% if item.status == 'approved' %}selected{% endif %}>Approved</option>
+                                <option value="hidden" {% if item.status == 'hidden' %}selected{% endif %}>Hidden</option>
+                            </select>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;">
+                                <input type="checkbox" name="is_featured" {% if item.is_featured %}checked{% endif %} onchange="this.form.submit()">
+                                Featured on Home
+                            </label>
+                        </form>
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_delete_feedback', feedback_id=item.id, page=feedbacks['page'], search=request.args.get('search', '')) }}" onsubmit="return confirm('Delete this review?')">
+                            <button type="submit" class="btn-outline" style="color: #ff667c; border-color: rgba(255,102,124,0.3); padding: 5px 10px; font-size: 0.8rem;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="admin-search-empty">No reviews found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        {% if feedbacks['has_prev'] %}
+        <a href="{{ url_for('admin_feedback_page', page=feedbacks['prev_page'], search=request.args.get('search', ''), rating=request.args.get('rating', '')) }}">Prev</a>
+        {% endif %}
+        <span>Page {{ feedbacks['page'] }} / {{ feedbacks['pages'] }}</span>
+        {% if feedbacks['has_next'] %}
+        <a href="{{ url_for('admin_feedback_page', page=feedbacks['next_page'], search=request.args.get('search', ''), rating=request.args.get('rating', '')) }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

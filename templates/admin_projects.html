@@ -1,0 +1,108 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Projects{% endblock %}
+{% block admin_heading %}Manage Projects{% endblock %}
+
+{% block admin_body %}
+<div class="glass-card admin-section">
+  <h2>Manage Projects</h2>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th style="width: 22%;">Project</th>
+          <th style="width: 18%;">Client</th>
+          <th style="width: 15%;">Timeline</th>
+          <th style="width: 20%;">Status / Team</th>
+          <th style="width: 25%; min-width: 260px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in projects['items'] %}
+        <tr>
+          <td>
+            <strong>{{ item.title }}</strong><br>
+            <span style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">{{ item.service or '—' }}</span><br>
+            <span class="badge {% if item.priority == 'Urgent' %}rejected{% elif item.priority == 'High' %}reviewing{% elif item.priority == 'Medium' %}new{% else %}completed{% endif %}" style="font-size: 0.7rem; padding: 2px 6px; margin-top: 4px;">
+                {{ item.priority }}
+            </span>
+          </td>
+          <td>
+            {{ item.client_name or 'Unlinked' }}<br>
+            <small style="color: rgba(255,255,255,0.6);">{{ item.client_email or '—' }}</small>
+          </td>
+          <td>
+            <div style="font-size: 0.9rem;">
+                {% if item.due_date %}
+                    {{ item.due_date }}
+                    {% if item.status != 'Completed' and item.status != 'Cancelled' %}
+                        {% if item.due_date < today %}
+                            <br><span class="badge rejected" style="font-size: 0.7rem;">OVERDUE</span>
+                        {% elif item.due_date == today %}
+                            <br><span class="badge reviewing" style="font-size: 0.7rem;">DUE TODAY</span>
+                        {% elif item.due_date <= three_days_later %}
+                            <br><span class="badge new" style="font-size: 0.7rem;">DUE SOON</span>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+          </td>
+          <td>
+            <div style="display: grid; gap: 4px;">
+                <span class="badge {{ item.status|lower|replace(' ','-') }}">{{ item.status }}</span>
+                <span style="font-size: 0.85rem; color: #56a4ff;">{{ item.designer_name or 'Unassigned' }}</span>
+                <div class="progress-mini" style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                    <div style="width: {{ item.progress }}%; height: 100%; background: #3fcd80;"></div>
+                </div>
+                <small style="font-size: 0.7rem;">{{ item.progress }}% Complete</small>
+                {% if item.latest_invoice_id %}
+                <a href="{{ url_for('download_invoice_pdf', invoice_id=item.latest_invoice_id) }}" class="admin-pdf-link" style="padding: 2px 6px; font-size: 0.7rem; margin-top: 6px;">
+                    📄 Invoice PDF
+                </a>
+                {% endif %}
+            </div>
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_update_project', project_id=item.id) }}" style="display: grid; gap: 8px;">
+              <div style="display: flex; gap: 8px;">
+                  <select name="status" style="flex: 1; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem;">
+                    {% for s in ['Discovery','In Progress','Review','Completed','Cancelled'] %}
+                    <option value="{{ s }}" {% if item.status == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                  </select>
+                  <input type="number" name="progress" value="{{ item.progress }}" min="0" max="100" style="width: 55px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem;" title="Progress %">
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                  <select name="designer_name" style="flex: 1; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem;">
+                      <option value="" {% if not item.designer_name %}selected{% endif %}>Unassigned</option>
+                      <option value="Probob Team" {% if item.designer_name == 'Probob Team' %}selected{% endif %}>Probob Team</option>
+                  </select>
+                  <select name="priority" style="width: 85px; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem;">
+                    {% for p in ['Low','Medium','High','Urgent'] %}
+                    <option value="{{ p }}" {% if item.priority == p %}selected{% endif %}>{{ p }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+
+              <div style="display: flex; gap: 8px;">
+                  <input type="date" name="due_date" value="{{ item.due_date or '' }}" style="flex: 1; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem;">
+                  <button class="btn-primary" type="submit" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 8px;">Save</button>
+              </div>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">No projects yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    {% if projects['has_prev'] %}<a href="{{ url_for('admin_projects_page', page=projects['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ projects['page'] }} / {{ projects['pages'] }}</span>
+    {% if projects['has_next'] %}<a href="{{ url_for('admin_projects_page', page=projects['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Quotes{% endblock %}
+{% block admin_heading %}Quote Requests{% endblock %}
+{% block admin_body %}
+<div class="glass-card admin-section">
+  <div class="admin-actions" style="justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div>
+      <span class="section-kicker">Request Quote Button Target</span>
+      <h2>All Quotes and Status Management</h2>
+    </div>
+    <a class="btn-outline" href="{{ url_for('admin_panel') }}">Back to Dashboard</a>
+  </div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Client</th><th>Service</th><th>Budget / Deadline</th><th>Description</th><th>Status</th><th>Update</th></tr></thead>
+      <tbody>
+        {% for q in quotes['items'] %}
+        <tr>
+          <td><strong>{{ q.client_name }}</strong><br>{{ q.email }}<br>{{ q.phone or '—' }}</td>
+          <td>{{ q.service }}<br><small>{{ q.company or 'No company' }}</small></td>
+          <td>{{ q.budget_range or '—' }}<br>{{ q.deadline or '—' }}</td>
+          <td>{{ q.project_description }}</td>
+          <td><span class="badge {{ q.status|lower }}">{{ q.status }}</span></td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_update_quote', quote_id=q.id, page=quotes['page'], search=request.args.get('search', '')) }}" class="inline-form">
+              <select name="status">
+                {% for s in ['New','Reviewing','Quoted','Accepted','Rejected'] %}
+                <option value="{{ s }}" {% if q.status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+              <button class="btn-primary" type="submit">Update</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">No quote records found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    {% if quotes['has_prev'] %}<a href="{{ url_for('admin_quotes', page=quotes['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ quotes['page'] }} / {{ quotes['pages'] }}</span>
+    {% if quotes['has_next'] %}<a href="{{ url_for('admin_quotes', page=quotes['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+</div>
+{% endblock %}

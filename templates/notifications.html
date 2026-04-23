@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block newsletter %}{% endblock %}
+
+{% block content %}
+<div class="page-hero compact dashboard-hero-bg">
+  <div class="container">
+    <span class="section-kicker">Inbox</span>
+    <h1>Notifications</h1>
+    <p>Track project updates, invoices, bookings, revisions, and account alerts in one place.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="glass-card admin-section" style="max-width:1000px;margin:0 auto;">
+      <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div>
+          <span class="panel-kicker">Updates</span>
+          <h2>Your <em>Notification Center</em></h2>
+        </div>
+        <form method="POST" action="{{ url_for('notifications_read_all') }}">
+          <button class="btn-outline" type="submit">Mark all as read</button>
+        </form>
+      </div>
+
+      {% if notifications %}
+        <div class="notif-page-list">
+          {% for item in notifications %}
+          <a class="notif-page-card glass-card {% if not item.is_read %}unread{% endif %}" href="{{ url_for('open_notification', notification_id=item.id) }}">
+            <div class="notif-page-meta">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.created_at[:19].replace('T', ' ') }}</span>
+            </div>
+            <p>{{ item.message }}</p>
+            <small>{% if item.link %}Open related page{% else %}Notification only{% endif %}</small>
+          </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">No notifications available.</div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

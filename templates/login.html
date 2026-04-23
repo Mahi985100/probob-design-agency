@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <a href="/" class="auth-logo">PROBOB<span class="logo-dot">.</span></a>
+            <h1>Welcome <em>Back</em></h1>
+            <p>Sign in to your account</p>
+        </div>
+        <form action="/login{% if request.args.get('next') %}?next={{ request.args.get('next') }}{% endif %}" method="POST" class="auth-form">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" placeholder="you@email.com" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-primary full-width">Sign In →</button>
+        </form>
+        <div class="auth-links-row">
+            <a href="/forgot-password" class="forgot-link">Forgot password?</a>
+        </div>
+        <p class="auth-switch">Don't have an account? <a href="/signup">Create one</a></p>
+    </div>
+    <div class="auth-visual">
+        <div class="auth-visual-content">
+            <div class="av-quote">"Design is not just what it looks like and feels like. Design is how it works."</div>
+            <div class="av-stat-row">
+                <div class="av-stat"><strong>150+</strong><span>Projects</span></div>
+                <div class="av-stat"><strong>40+</strong><span>Clients</span></div>
+                <div class="av-stat"><strong>12</strong><span>Awards</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

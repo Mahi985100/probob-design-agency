@@ -1,0 +1,82 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Services{% endblock %}
+{% block admin_heading %}Services CRUD{% endblock %}
+{% block admin_body %}
+<div class="crud-layout stacked-crud">
+  <div class="glass-card admin-section crud-block-header"><h2 class="crud-block-title">Add Service</h2><form class="crud-form" method="POST" action="{% if edit_item %}{{ url_for('admin_edit_service', service_id=edit_item.id) }}{% else %}{{ url_for('admin_create_service') }}{% endif %}">
+    <h3>{% if edit_item %}Edit Service{% else %}Add Service{% endif %}</h3>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label>Service Title *</label>
+        <input type="text" name="title" placeholder="e.g. Brand Identity" value="{{ edit_item.title if edit_item else '' }}" required>
+      </div>
+      <div class="form-group">
+        <label>Icon / Emoji</label>
+        <input type="text" name="icon" placeholder="e.g. ✨" value="{{ edit_item.icon if edit_item else '✨' }}">
+      </div>
+      <div class="form-group">
+        <label>Feature 1</label>
+        <input type="text" name="feature_1" placeholder="e.g. Logo Design" value="{{ edit_item.feature_1 if edit_item else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Feature 2</label>
+        <input type="text" name="feature_2" placeholder="e.g. Brand Guidelines" value="{{ edit_item.feature_2 if edit_item else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Feature 3</label>
+        <input type="text" name="feature_3" placeholder="e.g. Typography" value="{{ edit_item.feature_3 if edit_item else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Feature 4</label>
+        <input type="text" name="feature_4" placeholder="e.g. Color Palette" value="{{ edit_item.feature_4 if edit_item else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <input type="text" name="category" placeholder="e.g. Branding" value="{{ edit_item.category if edit_item else '' }}">
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: 15px;">
+      <label>Description</label>
+      <textarea name="description" rows="5" placeholder="Detailed description of this service..." style="min-height: 120px;">{{ edit_item.description if edit_item else '' }}</textarea>
+    </div>
+    <div class="admin-actions">
+      <button class="btn-primary" type="submit">{% if edit_item %}Update Service{% else %}Create Service{% endif %}</button>
+      {% if edit_item %}<a class="btn-outline" href="{{ url_for('admin_services_page') }}">Cancel Edit</a>{% endif %}
+    </div>
+  </form></div>
+  <div class="glass-card admin-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>All Services</h2>
+        <form method="GET" action="{{ url_for('admin_services_page') }}" style="display: flex; gap: 10px;">
+            <select name="category" onchange="this.form.submit()" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px;">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if active_cat == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    <div class="table-wrap"><table class="admin-table"><thead><tr><th>Title</th><th>Description</th><th>Features</th><th>Actions</th></tr></thead><tbody>
+      {% for item in services['items'] %}
+      <tr>
+        <td>{{ item.icon }} {{ item.title }}</td>
+        <td>{{ item.description }}</td>
+        <td>{{ item.feature_1 }}<br>{{ item.feature_2 }}<br>{{ item.feature_3 }}<br>{{ item.feature_4 }}</td>
+        <td>
+          <div class="admin-actions">
+            <a class="btn-outline" href="{{ url_for('admin_edit_service', service_id=item.id) }}">Edit</a>
+            <form method="POST" action="{{ url_for('admin_delete_service', service_id=item.id) }}"><button class="btn-outline" type="submit">Delete</button></form>
+          </div>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="4">No services yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  <div class="pagination">
+    {% if services['has_prev'] %}<a href="{{ url_for('admin_services_page', page=services['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ services['page'] }} / {{ services['pages'] }}</span>
+    {% if services['has_next'] %}<a href="{{ url_for('admin_services_page', page=services['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,300 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Analytics{% endblock %}
+{% block admin_heading %}Analytics Dashboard{% endblock %}
+{% block admin_body %}
+
+<style>
+  /* Page safety */
+  .admin-main,
+  .admin-content,
+  .admin-body,
+  .admin-panel,
+  .admin-columns,
+  .metric-row {
+    min-width: 0;
+  }
+
+  /* Enhanced Metric Cards */
+  .analytic-card {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(20, 20, 35, 0.4);
+    backdrop-filter: blur(16px);
+    min-width: 0;
+  }
+
+  .analytic-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(238, 98, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .analytic-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #ee62ff, #538fff);
+    opacity: 0.8;
+  }
+
+  .analytic-card h2 {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+    font-weight: 700;
+    margin: 10px 0 5px 0;
+    background: linear-gradient(135deg, #ffffff 0%, #a5a5b5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    word-break: break-word;
+  }
+
+  .analytic-icon {
+    position: absolute;
+    right: -20px;
+    bottom: -20px;
+    font-size: 8rem;
+    opacity: 0.04;
+    transform: rotate(-15deg);
+    pointer-events: none;
+  }
+
+  /* Metric row responsive fix */
+  .metric-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  /* Chart section responsive fix */
+  .admin-columns.analytics-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+    gap: 16px;
+    margin-top: 30px;
+    align-items: stretch;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .chart-wrapper {
+    position: relative;
+    padding: 24px;
+    background: rgba(20, 20, 35, 0.4);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: border-color 0.3s ease;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .chart-wrapper:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .chart-wrapper h2 {
+    font-size: 1.1rem;
+    color: #cfc7ff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .chart-box {
+    position: relative;
+    width: 100%;
+    height: 360px;
+    min-width: 0;
+  }
+
+  .chart-box canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  @media (max-width: 1100px) {
+    .metric-row {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-columns.analytics-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .chart-wrapper {
+      padding: 18px;
+    }
+
+    .chart-box {
+      height: 300px;
+    }
+
+    .analytic-icon {
+      font-size: 5rem;
+      right: -10px;
+      bottom: -10px;
+    }
+  }
+</style>
+
+<div class="metric-row">
+  <div class="glass-card chart-card analytic-card">
+    <div class="analytic-icon">👥</div>
+    <span class="section-kicker">Clients Base</span>
+    <h2>{{ chart_data.client_count }}</h2>
+    <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Total registered clients</p>
+  </div>
+
+  <div class="glass-card chart-card analytic-card">
+    <div class="analytic-icon">💎</div>
+    <span class="section-kicker">Revenue Generated</span>
+    <h2>₹{{ chart_data.revenue_total }}</h2>
+    <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Total paid revenue</p>
+  </div>
+
+  <div class="glass-card chart-card analytic-card">
+    <div class="analytic-icon">🚀</div>
+    <span class="section-kicker">Project Workload</span>
+    <h2>{{ chart_data.active_projects }}</h2>
+    <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Active ongoing projects</p>
+  </div>
+</div>
+
+<div class="admin-columns analytics-grid">
+  <div class="chart-wrapper">
+    <h2>Revenue Pulse</h2>
+    <div class="chart-box">
+      <canvas id="revenueChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-wrapper">
+    <h2>Project Status Split</h2>
+    <div class="chart-box">
+      <canvas id="projectStatusChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+  Chart.defaults.color = "rgba(255, 255, 255, 0.7)";
+
+  const tooltipConfig = {
+    backgroundColor: 'rgba(20, 20, 35, 0.9)',
+    titleColor: '#ffffff',
+    bodyColor: '#cfc7ff',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    padding: 12,
+    displayColors: true,
+    boxPadding: 6,
+    cornerRadius: 8
+  };
+
+  const revCtx = document.getElementById('revenueChart').getContext('2d');
+
+  const barGradient = revCtx.createLinearGradient(0, 0, 0, 400);
+  barGradient.addColorStop(0, 'rgba(238, 98, 255, 0.9)');
+  barGradient.addColorStop(1, 'rgba(83, 143, 255, 0.2)');
+
+  new Chart(revCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ chart_data.monthly_labels|tojson }},
+      datasets: [{
+        label: 'Revenue (₹)',
+        data: {{ chart_data.monthly_values|tojson }},
+        backgroundColor: barGradient,
+        borderColor: 'rgba(238, 98, 255, 1)',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+        hoverBackgroundColor: 'rgba(238, 98, 255, 1)'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: tooltipConfig
+      },
+      scales: {
+        x: {
+          grid: { display: false, drawBorder: false },
+          ticks: {
+            color: 'rgba(255, 255, 255, 0.6)',
+            padding: 10
+          }
+        },
+        y: {
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawBorder: false
+          },
+          ticks: {
+            color: 'rgba(255, 255, 255, 0.6)',
+            padding: 10,
+            callback: function(value) {
+              if (value >= 1000) return '₹' + (value / 1000) + 'k';
+              return '₹' + value;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  const statusCtx = document.getElementById('projectStatusChart').getContext('2d');
+
+  const cyberpunkColors = [
+    'rgba(86, 164, 255, 0.85)',
+    'rgba(238, 98, 255, 0.85)',
+    'rgba(163, 118, 255, 0.85)',
+    'rgba(63, 205, 128, 0.85)',
+    'rgba(255, 194, 87, 0.85)',
+    'rgba(255, 102, 124, 0.85)'
+  ];
+
+  new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ chart_data.project_status_labels|tojson }},
+      datasets: [{
+        data: {{ chart_data.project_status_values|tojson }},
+        backgroundColor: cyberpunkColors,
+        borderWidth: 0,
+        hoverOffset: 15
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '75%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: 'rgba(255, 255, 255, 0.8)',
+            padding: 20,
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        },
+        tooltip: tooltipConfig
+      }
+    }
+  });
+</script>
+{% endblock %}

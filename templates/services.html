@@ -1,0 +1,701 @@
+{% extends "base.html" %}
+{% block title %}Services{% endblock %}
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Raleway:wght@300;400;500;600&display=swap');
+
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-dim: #8a6e2f;
+    --black: #050505;
+    --black-2: #0d0d0d;
+    --black-3: #111111;
+    --black-4: #1a1a1a;
+    --white: #f5f0e8;
+    --white-dim: rgba(245, 240, 232, 0.6);
+    --glow: 0 0 30px rgba(201, 168, 76, 0.4);
+    --glow-intense: 0 0 60px rgba(201, 168, 76, 0.6);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Raleway', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── CANVAS PARTICLE BG ── */
+  #particle-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.45;
+  }
+
+  /* ── GRID OVERLAY ── */
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridShift 20s linear infinite;
+  }
+  @keyframes gridShift {
+    0%   { background-position: 0 0; }
+    100% { background-position: 60px 60px; }
+  }
+
+  /* ── SCAN LINE ── */
+  .scanline {
+    position: fixed;
+    top: -10%;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent);
+    z-index: 2;
+    pointer-events: none;
+    animation: scanDown 8s linear infinite;
+  }
+  @keyframes scanDown {
+    0%   { top: -2%; }
+    100% { top: 102%; }
+  }
+
+  /* ── CONTENT WRAPPER ── */
+  .page-wrapper {
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ── PAGE HERO ── */
+  .page-hero {
+    position: relative;
+    min-height: 42vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 20px 60px;
+    overflow: hidden;
+  }
+
+  .page-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 50%,
+      rgba(201,168,76,0.12) 0%,
+      rgba(201,168,76,0.04) 40%,
+      transparent 70%);
+    animation: heroBreath 6s ease-in-out infinite alternate;
+  }
+  @keyframes heroBreath {
+    0%   { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 1;   transform: scale(1.05); }
+  }
+
+  .page-hero::after {
+    content: 'SERVICES';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: clamp(80px, 18vw, 200px);
+    font-weight: 900;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(201,168,76,0.06);
+    letter-spacing: 0.15em;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .hero-inner { position: relative; z-index: 2; }
+
+  .section-kicker {
+    display: inline-block;
+    font-family: 'Raleway', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    padding: 6px 18px;
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeSlideDown 0.8s ease both;
+  }
+  .section-kicker::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.15), transparent);
+    transform: translateX(-100%);
+    animation: shimmerSlide 3s ease-in-out infinite 1s;
+  }
+  @keyframes shimmerSlide {
+    0%   { transform: translateX(-100%); }
+    60%  { transform: translateX(100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .page-hero h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(40px, 8vw, 80px);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--white);
+    letter-spacing: 0.06em;
+    margin-bottom: 18px;
+    animation: fadeSlideDown 0.8s ease 0.2s both;
+  }
+  .page-hero h1 span { color: var(--gold); }
+
+  .page-hero p {
+    font-size: 15px;
+    color: var(--white-dim);
+    letter-spacing: 0.05em;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.8;
+    animation: fadeSlideDown 0.8s ease 0.4s both;
+  }
+
+  /* Gold separator line */
+  .hero-line {
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 28px auto 0;
+    animation: fadeSlideDown 0.8s ease 0.5s both, linePulse 3s ease-in-out infinite 1s;
+  }
+  @keyframes linePulse {
+    0%, 100% { width: 80px; opacity: 0.7; }
+    50%       { width: 140px; opacity: 1; }
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 60px 20px 120px;
+  }
+
+  .container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ── GRID ── */
+  .services-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 28px;
+    margin-top: 20px;
+  }
+
+  /* ── SERVICE CARD ── */
+  .service-detail-card {
+    position: relative;
+    background: var(--black-3);
+    border: 1px solid rgba(201,168,76,0.18);
+    border-radius: 4px;
+    padding: 44px 36px 36px;
+    overflow: hidden;
+    cursor: default;
+    transition: transform 0.4s cubic-bezier(0.23,1,0.32,1),
+                border-color 0.4s ease,
+                box-shadow 0.4s ease;
+    animation: cardReveal 0.7s ease both;
+    transform-style: preserve-3d;
+  }
+
+  /* Stagger card animations */
+  .service-detail-card:nth-child(1) { animation-delay: 0.1s; }
+  .service-detail-card:nth-child(2) { animation-delay: 0.2s; }
+  .service-detail-card:nth-child(3) { animation-delay: 0.3s; }
+  .service-detail-card:nth-child(4) { animation-delay: 0.4s; }
+  .service-detail-card:nth-child(5) { animation-delay: 0.5s; }
+  .service-detail-card:nth-child(6) { animation-delay: 0.6s; }
+
+  @keyframes cardReveal {
+    from { opacity: 0; transform: translateY(40px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* Corner accent marks */
+  .service-detail-card::before,
+  .service-detail-card::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: var(--gold);
+    border-style: solid;
+    transition: all 0.4s ease;
+    opacity: 0.5;
+  }
+  .service-detail-card::before {
+    top: 10px; left: 10px;
+    border-width: 1px 0 0 1px;
+  }
+  .service-detail-card::after {
+    bottom: 10px; right: 10px;
+    border-width: 0 1px 1px 0;
+  }
+
+  /* Holographic sweep */
+  .card-holo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      transparent 30%,
+      rgba(201,168,76,0.04) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0s;
+    pointer-events: none;
+  }
+  .service-detail-card:hover .card-holo {
+    transform: translateX(100%);
+    transition: transform 0.7s ease;
+  }
+
+  /* Top edge glow line */
+  .card-top-line {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .service-detail-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    border-color: rgba(201,168,76,0.55);
+    box-shadow:
+      0 0 0 1px rgba(201,168,76,0.1),
+      0 20px 60px rgba(0,0,0,0.6),
+      0 0 40px rgba(201,168,76,0.12),
+      inset 0 1px 0 rgba(201,168,76,0.1);
+  }
+  .service-detail-card:hover::before,
+  .service-detail-card:hover::after {
+    width: 26px; height: 26px; opacity: 1;
+  }
+  .service-detail-card:hover .card-top-line { opacity: 1; }
+
+  /* ── ICON ── */
+  .sd-icon {
+    font-size: 36px;
+    margin-bottom: 22px;
+    position: relative;
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  .sd-icon::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.15), transparent 70%);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.4s ease;
+  }
+  .service-detail-card:hover .sd-icon {
+    transform: scale(1.12) rotate(-3deg);
+  }
+  .service-detail-card:hover .sd-icon::after {
+    opacity: 1; transform: scale(1);
+  }
+
+  /* ── TITLE ── */
+  .service-detail-card h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--white);
+    margin-bottom: 14px;
+    transition: color 0.3s ease;
+  }
+  .service-detail-card:hover h3 { color: var(--gold-light); }
+
+  /* Gold separator */
+  .card-divider {
+    width: 40px;
+    height: 1px;
+    background: var(--gold-dim);
+    margin-bottom: 16px;
+    transition: width 0.4s ease, background 0.4s ease;
+  }
+  .service-detail-card:hover .card-divider {
+    width: 70px;
+    background: var(--gold);
+  }
+
+  /* ── DESCRIPTION ── */
+  .service-detail-card p {
+    font-size: 14px;
+    color: var(--white-dim);
+    line-height: 1.8;
+    margin-bottom: 22px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── FEATURES LIST ── */
+  .sd-list {
+    list-style: none;
+    margin-bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .sd-list li {
+    font-size: 13px;
+    color: rgba(245,240,232,0.65);
+    padding-left: 20px;
+    position: relative;
+    letter-spacing: 0.03em;
+    transition: color 0.3s ease;
+  }
+  .sd-list li::before {
+    content: '◆';
+    position: absolute;
+    left: 0;
+    top: 1px;
+    font-size: 7px;
+    color: var(--gold-dim);
+    transition: color 0.3s ease, transform 0.3s ease;
+  }
+  .service-detail-card:hover .sd-list li { color: rgba(245,240,232,0.85); }
+  .service-detail-card:hover .sd-list li::before {
+    color: var(--gold);
+    transform: rotate(45deg);
+  }
+
+  /* ── BUTTONS ── */
+  .service-card-btns {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+
+  .btn-primary, .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 11px 22px;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.23,1,0.32,1);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: var(--black);
+    border: 1px solid var(--gold);
+    box-shadow: 0 4px 15px rgba(201,168,76,0.25);
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(201,168,76,0.45);
+    letter-spacing: 0.25em;
+  }
+  .btn-primary:hover::before { opacity: 1; }
+  .btn-primary span { position: relative; z-index: 1; }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.4);
+  }
+  .btn-outline::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(201,168,76,0.08);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s ease;
+  }
+  .btn-outline:hover {
+    border-color: var(--gold);
+    color: var(--gold-light);
+    transform: translateY(-2px);
+  }
+  .btn-outline:hover::before { transform: scaleX(1); }
+
+  /* ── FLOATING CORNER ORBS ── */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(80px);
+    animation: orbFloat 12s ease-in-out infinite;
+  }
+  .orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(201,168,76,0.07), transparent 60%);
+    top: -150px; right: -150px;
+    animation-delay: 0s;
+  }
+  .orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(201,168,76,0.05), transparent 60%);
+    bottom: -100px; left: -100px;
+    animation-delay: -6s;
+  }
+  @keyframes orbFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%       { transform: translateY(-40px) scale(1.05); }
+  }
+
+  /* ── NUMBER BADGE ── */
+  .card-number {
+    position: absolute;
+    top: 16px; right: 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: rgba(201,168,76,0.25);
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  .service-detail-card:hover .card-number {
+    color: rgba(201,168,76,0.6);
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeSlideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .services-detail-grid { grid-template-columns: 1fr; gap: 20px; }
+    .service-detail-card { padding: 36px 28px 30px; }
+  }
+</style>
+
+<!-- Fixed background elements -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<canvas id="particle-canvas"></canvas>
+<div class="grid-overlay"></div>
+<div class="scanline"></div>
+
+<div class="page-wrapper">
+  <!-- HERO -->
+  <div class="page-hero">
+    <div class="hero-inner container">
+      <span class="section-kicker">What We Do</span>
+      <h1>Our <span>Services</span></h1>
+      <p>Services synced to Probob's current offering, with quote and booking workflows added.</p>
+      <div class="hero-line"></div>
+    </div>
+  </div>
+
+  <!-- SERVICES SECTION -->
+  <section class="section">
+    <div class="container">
+      <div class="services-detail-grid">
+        {% for item in items %}
+        <div class="service-detail-card" data-tilt>
+          <div class="card-top-line"></div>
+          <div class="card-holo"></div>
+          <span class="card-number">0{{ loop.index }}</span>
+
+          <div class="sd-icon">{{ item.icon }}</div>
+          <h3>{{ item.title }}</h3>
+          <div class="card-divider"></div>
+          <p>{{ item.description }}</p>
+
+          <ul class="sd-list">
+            {% if item.feature_1 %}<li>{{ item.feature_1 }}</li>{% endif %}
+            {% if item.feature_2 %}<li>{{ item.feature_2 }}</li>{% endif %}
+            {% if item.feature_3 %}<li>{{ item.feature_3 }}</li>{% endif %}
+            {% if item.feature_4 %}<li>{{ item.feature_4 }}</li>{% endif %}
+          </ul>
+
+          <div class="service-card-btns">
+            {% if current_user %}
+            <a href="/start-project" class="btn-primary"><span>Request Quote</span></a>
+            <a href="/book-consultation" class="btn-outline">Book Consultation</a>
+            <button onclick="toggleWishlist({{ item.id }}, this)" class="btn-outline" style="min-width: 44px; display: flex; align-items: center; justify-content: center; padding: 11px;">
+              <span class="heart-icon">❤️</span>
+            </button>
+            {% else %}
+            <a href="/signup" class="btn-primary"><span>Get Started</span></a>
+            <a href="/pricing" class="btn-outline">View Pricing</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ── PARTICLE CANVAS ── */
+(function() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); init(); });
+
+  function Particle() {
+    this.x  = Math.random() * W;
+    this.y  = Math.random() * H;
+    this.r  = Math.random() * 1.5 + 0.3;
+    this.vx = (Math.random() - 0.5) * 0.25;
+    this.vy = (Math.random() - 0.5) * 0.25;
+    this.a  = Math.random() * 0.6 + 0.1;
+    this.gold = Math.random() > 0.5;
+  }
+  Particle.prototype.update = function() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < 0) this.x = W;
+    if (this.x > W) this.x = 0;
+    if (this.y < 0) this.y = H;
+    if (this.y > H) this.y = 0;
+  };
+  Particle.prototype.draw = function() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.gold
+      ? `rgba(201, 168, 76, ${this.a})`
+      : `rgba(245, 240, 232, ${this.a * 0.3})`;
+    ctx.fill();
+  };
+
+  function init() {
+    const count = Math.floor((W * H) / 9000);
+    particles = Array.from({ length: count }, () => new Particle());
+  }
+  init();
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => { p.update(); p.draw(); });
+
+    // Draw connecting lines
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(201,168,76,${0.06 * (1 - dist/100)})`;
+          ctx.lineWidth = 0.4;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ── 3D TILT ON CARDS ── */
+document.querySelectorAll('[data-tilt]').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const cx = rect.left + rect.width  / 2;
+    const cy = rect.top  + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width  / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+    card.style.transform = `
+      translateY(-8px) scale(1.01)
+      rotateY(${dx * 5}deg)
+      rotateX(${-dy * 5}deg)
+    `;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+
+/* ── INTERSECTION OBSERVER for scroll reveal ── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.animationPlayState = 'running';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.service-detail-card').forEach(card => {
+  card.style.animationPlayState = 'paused';
+  observer.observe(card);
+});
+
+function toggleWishlist(serviceId, btn) {
+    fetch(`/wishlist/toggle/${serviceId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'added') {
+            btn.style.borderColor = 'var(--accent-1)';
+            btn.querySelector('.heart-icon').style.opacity = '1';
+            alert('Service added to wishlist!');
+        } else {
+            btn.style.borderColor = 'rgba(201,168,76,0.4)';
+            btn.querySelector('.heart-icon').style.opacity = '0.5';
+            alert('Service removed from wishlist!');
+        }
+    });
+}
+</script>
+
+{% endblock %}

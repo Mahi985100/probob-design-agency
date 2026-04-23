@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Probob Design Studio — Bold Creative Agency{% endblock %}
+{% block content %}
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <div class="hero-inner">
+        <div class="hero-badge">✦ Award-Winning Studio · Ahmedabad</div>
+        <h1 class="hero-headline">
+            We Build<br>
+            <em class="hero-italic">Bold</em>
+            <span class="hero-outline">Visual</span><br>
+            Experiences
+        </h1>
+        <p class="hero-sub">From brand identities to digital products — we craft work that captivates audiences and drives results for ambitious brands across the globe.</p>
+        <div class="hero-actions">
+            <a href="/portfolio" class="btn-primary">View Our Work</a>
+            <a href="/contact" class="btn-ghost">Start a Project <span class="arrow-right">→</span></a>
+        </div>
+        <div class="hero-scroll-hint">
+            <span>Scroll to explore</span>
+            <div class="scroll-dot"></div>
+        </div>
+    </div>
+    <div class="hero-marquee">
+        <div class="marquee-track">
+            <span>Branding</span><span class="dot">·</span>
+            <span>UI/UX</span><span class="dot">·</span>
+            <span>Motion</span><span class="dot">·</span>
+            <span>Print</span><span class="dot">·</span>
+            <span>Strategy</span><span class="dot">·</span>
+            <span>Web Design</span><span class="dot">·</span>
+            <span>Branding</span><span class="dot">·</span>
+            <span>UI/UX</span><span class="dot">·</span>
+            <span>Motion</span><span class="dot">·</span>
+            <span>Print</span><span class="dot">·</span>
+            <span>Strategy</span><span class="dot">·</span>
+            <span>Web Design</span><span class="dot">·</span>
+        </div>
+    </div>
+</section>
+
+<!-- Stats -->
+<section class="stats-section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-num">150<span class="stat-plus">+</span></div>
+                <div class="stat-label">Projects Delivered</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-num">40<span class="stat-plus">+</span></div>
+                <div class="stat-label">Happy Clients</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-num">8<span class="stat-plus">+</span></div>
+                <div class="stat-label">Years Experience</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <div class="stat-num">12</div>
+                <div class="stat-label">Design Awards</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Work -->
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-kicker">Featured Work</span>
+            <h2>Projects That <em>Define Us</em></h2>
+            <a href="/portfolio" class="section-link">View All Work →</a>
+        </div>
+        <div class="work-grid">
+            {% for item in portfolio %}
+            <div class="work-card">
+                <div class="work-card-visual" style="{% if item.cover_image %}background: url('{{ url_for('static', filename='uploads/' ~ item.cover_image) }}') center/cover no-repeat;{% endif %}">
+                    {% if not item.cover_image %}
+                        <div class="work-emoji">{{ item.emoji }}</div>
+                    {% endif %}
+                    <div class="work-card-overlay">
+                        <a href="/portfolio" class="work-view-btn">View Project →</a>
+                    </div>
+                </div>
+                <div class="work-card-info">
+                    <span class="work-tag">{{ item.category }}</span>
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Services strip -->
+<section class="services-strip">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-kicker">What We Do</span>
+            <h2>End-to-End <em>Creative</em> Solutions</h2>
+        </div>
+        <div class="services-row">
+            <div class="service-tile">
+                <div class="service-tile-icon">🎨</div>
+                <h3>Brand Identity</h3>
+                <p>Logos, visual systems, brand guidelines that set you apart from day one.</p>
+                <a href="/services" class="service-arrow">→</a>
+            </div>
+            <div class="service-tile">
+                <div class="service-tile-icon">📱</div>
+                <h3>UI/UX Design</h3>
+                <p>User-centred interfaces for web apps, mobile, and SaaS platforms.</p>
+                <a href="/services" class="service-arrow">→</a>
+            </div>
+            <div class="service-tile">
+                <div class="service-tile-icon">🎬</div>
+                <h3>Motion Graphics</h3>
+                <p>Animated logos, explainer videos, and cinematic brand films.</p>
+                <a href="/services" class="service-arrow">→</a>
+            </div>
+            <div class="service-tile">
+                <div class="service-tile-icon">🌐</div>
+                <h3>Web Design</h3>
+                <p>Responsive websites and landing pages built for modern browsers.</p>
+                <a href="/services" class="service-arrow">→</a>
+            </div>
+        </div>
+        <div class="services-cta">
+            <a href="/services" class="btn-primary">Explore All Services</a>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials-section">
+    <div class="container">
+        <div class="section-header light">
+            <span class="section-kicker">Client Love</span>
+            <h2>What People <em>Say</em></h2>
+        </div>
+        <div class="testimonials-grid">
+            {% for t in testimonials %}
+            <div class="testimonial-card">
+                <div class="stars">{% for i in range(t.rating) %}★{% endfor %}</div>
+                <blockquote>{{ t.message }}</blockquote>
+                <div class="testi-author">
+                    <div class="testi-avatar">{{ t.client_name[0] }}</div>
+                    <div>
+                        <strong>{{ t.client_name }}</strong>
+                        <small>{{ t.company }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CTA Banner -->
+<section class="cta-banner">
+    <div class="container">
+        <div class="cta-inner">
+            <h2>Ready to Build Something <em>Extraordinary?</em></h2>
+            <p>Let's talk about your project and bring your vision to life.</p>
+            <a href="/contact" class="btn-primary large">Start a Conversation →</a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Blog & Insights{% endblock %}
+{% block newsletter %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='figma_blog/app.css') }}">
+<style>
+  /* Fix notification menu leaking styles from app.css */
+  .notif-menu.glass-card {
+    position: absolute !important;
+    display: none !important;
+    cursor: default;
+    flex-direction: column;
+  }
+  .notif-dropdown:hover .notif-menu.glass-card {
+    display: block !important;
+  }
+
+  .blog-shell {
+    background: #060608;
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+    padding-top: 40px;
+    padding-bottom: 80px;
+  }
+  #root {
+    min-height: 100vh;
+    background: #060608;
+  }
+  .blog-shell .navbar-spacer {
+    height: 30px;
+  }
+  .blog-page-footer-bridge {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(243,198,35,0.2), transparent);
+    opacity: 0.7;
+  }
+  .footer {
+    margin-top: 0;
+  }
+  @media (max-width: 768px) {
+    .blog-shell { padding-top: 20px; }
+    .blog-shell .navbar-spacer { height: 10px; }
+  }
+</style>
+
+<div class="blog-shell">
+  <div class="navbar-spacer"></div>
+  <div id="root"></div>
+  <div class="blog-page-footer-bridge"></div>
+</div>
+
+<script>
+  window.BLOG_BACKEND_POSTS = {{ (posts or [])|map(attribute='id')|list|tojson }};
+  window.BLOG_BACKEND_POST_DETAILS = {{ (posts or [])|tojson }};
+  window.ACTIVE_CATEGORY = {{ (active_cat or '')|tojson }};
+</script>
+<script src="{{ url_for('static', filename='figma_blog/app.js') }}"></script>
+<script>
+(function() {
+  const backendPosts = (window.BLOG_BACKEND_POST_DETAILS || []).map((post, index) => ({
+    ...post,
+    url: `/blog/${post.id}`,
+    readTime: 4 + (index % 6),
+    image: post.cover_image ? `/static/uploads/${post.cover_image}` : '{{ url_for("static", filename="images/1.png") }}',
+    dateLabel: (() => {
+      const raw = post.published_at || '';
+      const parsed = raw ? new Date(raw.replace(' ', 'T')) : null;
+      return parsed && !isNaN(parsed) ? parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : raw;
+    })()
+  }));
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>\"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+
+  function setText(el, text) {
+    if (el) el.textContent = text || '';
+  }
+
+  function setImage(el, src, alt) {
+    if (!el) return;
+    el.src = src;
+    el.alt = alt || 'Blog cover image';
+    el.onerror = function() {
+      this.onerror = null;
+      this.src = '{{ url_for("static", filename="images/1.png") }}';
+    };
+  }
+
+  function hydrateFeatured(root) {
+    const feature = root.querySelector('.feat-glass');
+    if (!feature) return;
+
+    const post = backendPosts[0];
+    if (!post) {
+      feature.style.display = 'none';
+      return;
+    }
+    feature.style.display = '';
+
+    feature.dataset.postUrl = post.url;
+    feature.style.cursor = 'pointer';
+
+    // 1. Handle Image and Badge
+    const imgWrap = feature.querySelector('.feat-img-wrap');
+    if (imgWrap) {
+      setImage(imgWrap.querySelector('img'), post.image, post.title);
+      // Ensure badge exists and is styled
+      let badge = imgWrap.querySelector('.feat-badge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'feat-badge';
+        imgWrap.appendChild(badge);
+      }
+      badge.textContent = post.category || 'Featured';
+    }
+
+    // 2. Redesign the right content area
+    const grid = feature.querySelector('.feat-card-grid');
+    if (grid && grid.children[1]) {
+      const contentSide = grid.children[1];
+      contentSide.className = 'feat-content-area';
+      
+      contentSide.innerHTML = `
+        <div class="feat-meta-row">
+          <div class="feat-author-block">
+            <div class="feat-author-avatar">${(post.author || 'P')[0]}</div>
+            <div class="feat-author-info">
+              <div class="feat-author-name">${post.author || 'Probob Team'}</div>
+              <div class="feat-date">${post.dateLabel || 'Recently Published'}</div>
+            </div>
+          </div>
+          <div style="color: rgba(255,255,255,0.3); font-size: 0.85rem; font-weight: 500;">
+            ${post.readTime} min read
+          </div>
+        </div>
+        
+        <h2>${post.title}</h2>
+        
+        <p>${post.excerpt || 'Discover the latest insights and trends in design, technology, and branding with our featured story.'}</p>
+        
+        <button class="feat-read-btn" data-post-url="${post.url}">
+          Read Full Story
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      `;
+    }
+  }
+
+  function hydrateArticleCards(root) {
+    const grid = root.querySelector('.posts-grid');
+    if (grid && grid.children.length > 0) {
+      const template = grid.children[0];
+      const targetCount = Math.max(0, backendPosts.length - 1);
+      while (grid.children.length < targetCount) {
+        grid.appendChild(template.cloneNode(true));
+      }
+    }
+
+    const gridCards = Array.from(root.querySelectorAll('.posts-grid > *'));
+    gridCards.forEach((cardWrap, index) => {
+      const post = backendPosts[index + 1];
+      if (!post) {
+        cardWrap.style.display = 'none';
+        return;
+      }
+      cardWrap.style.display = '';
+      const card = cardWrap.querySelector('.glass-card') || cardWrap;
+      card.dataset.postUrl = post.url;
+      card.style.cursor = 'pointer';
+      setImage(card.querySelector('.pc-img-wrap img'), post.image, post.title);
+      setText(card.querySelector('h3'), post.title);
+      const excerpt = card.querySelector('p');
+      if (excerpt) excerpt.textContent = post.excerpt || '';
+      const cat = Array.from(card.querySelectorAll('span')).find(el => (el.textContent || '').trim() && (el.textContent || '').trim().length < 22 && (el.textContent || '').trim() !== '·' && !(el.textContent || '').includes('min'));
+      if (cat) cat.textContent = post.category || 'Blog';
+      const spans = Array.from(card.querySelectorAll('span'));
+      if (spans[1]) spans[1].textContent = post.author || '';
+      if (spans[3]) spans[3].textContent = post.dateLabel || '';
+      const readTime = spans.find(el => (el.textContent || '').includes('min'));
+      if (readTime) readTime.childNodes[readTime.childNodes.length - 1].textContent = ` ${post.readTime} min`;
+      const linkBtn = Array.from(card.querySelectorAll('button')).find(btn => btn.textContent && btn.textContent.includes('Read Article'));
+      if (linkBtn) {
+        linkBtn.dataset.postUrl = post.url;
+        linkBtn.type = 'button';
+      }
+    });
+
+    const listView = root.querySelector('.list-view');
+    if (listView && listView.children.length > 0) {
+      const template = listView.children[0];
+      const targetCount = Math.max(0, backendPosts.length - 1);
+      while (listView.children.length < targetCount) {
+        listView.appendChild(template.cloneNode(true));
+      }
+    }
+
+    const listCards = Array.from(root.querySelectorAll('.list-view > *'));
+    listCards.forEach((cardWrap, index) => {
+      const post = backendPosts[index + 1];
+      if (!post) {
+        cardWrap.style.display = 'none';
+        return;
+      }
+      cardWrap.style.display = '';
+      const card = cardWrap.querySelector('.glass-card') || cardWrap;
+      card.dataset.postUrl = post.url;
+      card.style.cursor = 'pointer';
+      setImage(card.querySelector('.pc-img-wrap img'), post.image, post.title);
+      setText(card.querySelector('h3'), post.title);
+      const excerpt = card.querySelector('p');
+      if (excerpt) excerpt.textContent = post.excerpt || '';
+      const spans = Array.from(card.querySelectorAll('span'));
+      if (spans[0]) spans[0].textContent = post.author || '';
+      if (spans[2]) spans[2].textContent = post.dateLabel || '';
+      const cat = Array.from(card.querySelectorAll('span')).find(el => (el.textContent || '').trim() && (el.textContent || '').trim().length < 22 && (el.textContent || '').trim() !== '·' && !(el.textContent || '').includes('min') && el !== spans[0] && el !== spans[2]);
+      if (cat) cat.textContent = post.category || 'Blog';
+      const readTime = spans.find(el => (el.textContent || '').includes('min'));
+      if (readTime) readTime.childNodes[readTime.childNodes.length - 1].textContent = ` ${post.readTime} min`;
+      const linkBtn = Array.from(card.querySelectorAll('button')).find(btn => btn.textContent && btn.textContent.includes('Read Article'));
+      if (linkBtn) {
+        linkBtn.dataset.postUrl = post.url;
+        linkBtn.type = 'button';
+      }
+    });
+
+    const countBadge = Array.from(root.querySelectorAll('span')).find(el => /articles$/i.test((el.textContent || '').trim()));
+    if (countBadge) countBadge.textContent = `${Math.max(backendPosts.length - 1, 0)} articles`;
+  }
+
+  function wireInteractions(root) {
+    if (root.dataset.blogWired === 'true') return;
+    root.dataset.blogWired = 'true';
+
+    root.addEventListener('click', function(e) {
+      const actionable = e.target.closest('[data-post-url], .feat-glass, .posts-grid > *, .list-view > *');
+      if (!actionable) return;
+      const url = actionable.dataset.postUrl || actionable.closest('[data-post-url]')?.dataset.postUrl;
+      if (url) {
+        e.preventDefault();
+        window.location.href = url;
+      }
+    });
+
+    root.addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const actionable = e.target.closest('[data-post-url]');
+      if (actionable?.dataset.postUrl) {
+        e.preventDefault();
+        window.location.href = actionable.dataset.postUrl;
+      }
+    });
+
+    // Use MutationObserver to re-hydrate when React re-renders (e.g. category filter clicks)
+    const observer = new MutationObserver((mutations) => {
+      let shouldRefresh = false;
+      for (const m of mutations) {
+        if (m.type === 'childList') {
+          shouldRefresh = true;
+          break;
+        }
+      }
+      if (shouldRefresh && !refreshQueued) refresh();
+    });
+
+    let refreshQueued = false;
+    const refresh = () => {
+      if (refreshQueued) return;
+      refreshQueued = true;
+      window.requestAnimationFrame(() => {
+        observer.disconnect();
+        hydrateFeatured(root);
+        hydrateArticleCards(root);
+        wireNewsletter(root);
+        observer.observe(root, { childList: true, subtree: true });
+        refreshQueued = false;
+      });
+    };
+
+    observer.observe(root, { childList: true, subtree: true });
+
+    window.setTimeout(refresh, 300);
+    window.setTimeout(refresh, 900);
+  }
+
+  function wireNewsletter(root) {
+    const input = root.querySelector('.nl-input');
+    const btn = Array.from(root.querySelectorAll('button')).find(el => (el.textContent || '').trim() === 'Subscribe');
+    if (!input || !btn || btn.dataset.newsletterWired === 'true') return;
+    btn.dataset.newsletterWired = 'true';
+    const submitForm = () => {
+      const email = (input.value || '').trim();
+      if (!email) return;
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{{ url_for("newsletter_subscribe") }}';
+      const field = document.createElement('input');
+      field.type = 'hidden';
+      field.name = 'email';
+      field.value = email;
+      form.appendChild(field);
+      document.body.appendChild(form);
+      form.submit();
+    };
+    btn.addEventListener('click', submitForm);
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitForm();
+      }
+    });
+  }
+
+  function boot() {
+    const root = document.getElementById('root');
+    if (!root || !backendPosts.length) return;
+    hydrateFeatured(root);
+    hydrateArticleCards(root);
+    wireInteractions(root);
+    wireNewsletter(root);
+  }
+
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries += 1;
+    boot();
+    if (document.querySelector('#root .blog-page') || tries > 20) {
+      boot();
+      clearInterval(timer);
+    }
+  }, 400);
+})();
+</script>
+{% endblock %}

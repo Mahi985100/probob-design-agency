@@ -1,0 +1,323 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block admin_heading %}Admin Dashboard{% endblock %}
+
+{% block admin_body %}
+<div class="glass-card admin-section" style="margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <span class="panel-kicker">Admin Intelligence</span>
+            <h2>Data <em>Exports</em></h2>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <a href="{{ url_for('admin_export_csv', export_type='users') }}" class="btn-outline" style="display: flex; align-items: center; gap: 8px;">
+                <span>📥 Export Users</span>
+            </a>
+            <a href="{{ url_for('admin_export_csv', export_type='projects') }}" class="btn-outline" style="display: flex; align-items: center; gap: 8px;">
+                <span>📂 Export Projects</span>
+            </a>
+            <a href="{{ url_for('admin_export_csv', export_type='payments') }}" class="btn-outline" style="display: flex; align-items: center; gap: 8px;">
+                <span>💳 Export Payments</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-stats" style="margin-bottom: 25px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="dash-stat glass-card">
+        <div class="dash-stat-icon">💰</div>
+        <div class="dash-stat-num">₹{{ metrics.unpaid_total }}</div>
+        <div class="dash-stat-label">{{ metrics.unpaid_count }} Unpaid Invoices</div>
+    </div>
+    <div class="dash-stat glass-card">
+        <div class="dash-stat-icon">📥</div>
+        <div class="dash-stat-num">{{ metrics.today_quotes }}</div>
+        <div class="dash-stat-label">New Quotes Today</div>
+    </div>
+    <div class="dash-stat glass-card">
+        <div class="dash-stat-icon">💬</div>
+        <div class="dash-stat-num">{{ metrics.pending_contacts }}</div>
+        <div class="dash-stat-label">Pending Messages</div>
+    </div>
+    <div class="dash-stat glass-card">
+        <div class="dash-stat-icon">⏳</div>
+        <div class="dash-stat-num">{{ metrics.upcoming_deadlines }}</div>
+        <div class="dash-stat-label">Deadlines (3 Days)</div>
+    </div>
+    <div class="dash-stat glass-card">
+        <div class="dash-stat-icon">✅</div>
+        <div class="dash-stat-num">{% if metrics.recent_payment %}₹{{ metrics.recent_payment.amount }}{% else %}—{% endif %}</div>
+        <div class="dash-stat-label">Recent Payment</div>
+    </div>
+    <div class="dash-stat glass-card">
+        <div class="dash-stat-icon">📄</div>
+        <div class="dash-stat-num" style="font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 10px;">
+            {% if metrics.recent_file %}{{ metrics.recent_file.title }}{% else %}—{% endif %}
+        </div>
+        <div class="dash-stat-label">Latest Upload</div>
+    </div>
+</div>
+
+<div class="admin-grid-cards">
+  <div class="glass-card admin-card">
+    <span class="section-kicker">Request Quotes</span>
+    <h3>Open Quote Flow</h3>
+    <div class="big">{{ admin_stats.pending_quotes }}</div>
+    <a class="btn-primary" href="{{ url_for('admin_quotes') }}" style="margin-top: 15px; display: inline-block;">Request Quote</a>
+  </div>
+
+  <div class="glass-card admin-card">
+    <span class="section-kicker">Booking Queue</span>
+    <h3>Consultation Requests</h3>
+    <div class="big">{{ admin_stats.bookings }}</div>
+    <p>All user bookings in one queue.</p>
+  </div>
+
+  <div class="glass-card admin-card">
+    <span class="section-kicker">Revision Queue</span>
+    <h3>Design Revisions</h3>
+    <div class="big">{{ admin_stats.revisions }}</div>
+    <p>Track pending changes and approvals.</p>
+  </div>
+
+  <div class="glass-card admin-card">
+    <span class="section-kicker">Recent Accounts</span>
+    <h3>Client Accounts</h3>
+    <div class="big">{{ admin_stats.accounts }}</div>
+    <p>New signups across the platform.</p>
+  </div>
+</div>
+
+<div class="admin-columns">
+  <div class="glass-card admin-section">
+    <h2>Booking Queue</h2>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Service</th>
+            <th>Schedule</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in bookings['items'] %}
+          <tr>
+            <td><strong>{{ item.name }}</strong><br>{{ item.email }}</td>
+            <td>{{ item.service_interest or '—' }}</td>
+            <td>{{ item.booking_date or '—' }}<br>{{ item.booking_time or '' }}</td>
+            <td><span class="badge {{ item.status|lower }}">{{ item.status }}</span></td>
+            <td>
+              <form method="POST" action="{{ url_for('admin_update_booking', booking_id=item.id, booking_page=bookings['page'], revision_page=revisions['page'], account_page=accounts['page'], search=request.args.get('search', '')) }}" class="inline-form">
+                <select name="status">
+                  {% for s in ['Requested','Confirmed','Completed','Cancelled'] %}
+                  <option value="{{ s }}" {% if item.status == s %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+                <button class="btn-outline" type="submit">Save</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5">No booking records yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      {% if bookings['has_prev'] %}
+      <a href="{{ url_for('admin_panel', booking_page=bookings['prev_page'], revision_page=revisions['page'], account_page=accounts['page'], search=request.args.get('search', '')) }}">Prev</a>
+      {% endif %}
+      <span>Page {{ bookings['page'] }} / {{ bookings['pages'] }}</span>
+      {% if bookings['has_next'] %}
+      <a href="{{ url_for('admin_panel', booking_page=bookings['next_page'], revision_page=revisions['page'], account_page=accounts['page'], search=request.args.get('search', '')) }}">Next</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="glass-card admin-section">
+    <h2>Recent Quote Activity</h2>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Service</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for quote in recent_quotes %}
+          <tr>
+            <td>{{ quote.client_name }}</td>
+            <td>{{ quote.service }}</td>
+            <td><span class="badge {{ quote.status|lower }}">{{ quote.status }}</span></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="3">No quote requests yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="admin-actions">
+      <a class="btn-primary" href="{{ url_for('admin_quotes') }}" style="margin-top: 20px; display: inline-block;">Go to Quote Page</a>
+    </div>
+  </div>
+</div>
+
+<div class="admin-columns" style="grid-template-columns: 1fr;">
+    <div class="glass-card admin-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div>
+                <span class="panel-kicker">Revenue Recovery</span>
+                <h2>Unpaid <em>Invoices</em></h2>
+            </div>
+            <a href="{{ url_for('admin_invoices_page') }}" class="btn-outline">Manage Invoices</a>
+        </div>
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Invoice No</th>
+                        <th>Client</th>
+                        <th>Due Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in unpaid_invoices %}
+                    <tr>
+                        <td><strong>{{ inv.invoice_no }}</strong></td>
+                        <td>{{ inv.client_name or '—' }}</td>
+                        <td>
+                            {% set today = now_iso()[:10] %}
+                            {% if inv.due_date %}
+                                {% if inv.due_date < today %}
+                                    <span style="color: #ff667c; font-weight: 600;">{{ inv.due_date }} (Overdue)</span>
+                                {% elif inv.due_date == today %}
+                                    <span style="color: #ffc257; font-weight: 600;">Today</span>
+                                {% else %}
+                                    {{ inv.due_date }}
+                                {% endif %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>₹{{ inv.amount }}</td>
+                        <td><span class="badge {{ inv.status|lower }}">{{ inv.status }}</span></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="admin-search-empty">No unpaid invoices. Great job!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="admin-columns">
+  <div class="glass-card admin-section">
+    <h2>Revision Queue</h2>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Project</th>
+            <th>Comments</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in revisions['items'] %}
+          <tr>
+            <td>{{ item.client_name or 'Client' }}</td>
+            <td>{{ item.project_title or 'Project' }}</td>
+            <td>{{ item.comments or '—' }}</td>
+            <td><span class="badge {{ item.status|lower }}">{{ item.status }}</span></td>
+            <td>
+              <form method="POST" action="{{ url_for('admin_update_revision', revision_id=item.id, booking_page=bookings['page'], revision_page=revisions['page'], account_page=accounts['page'], search=request.args.get('search', '')) }}" class="inline-form">
+                <select name="status">
+                  {% for s in ['Pending','In Review','Resolved','Rejected'] %}
+                  <option value="{{ s }}" {% if item.status == s %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+                <button class="btn-outline" type="submit">Save</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5">No revision requests yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      {% if revisions['has_prev'] %}
+      <a href="{{ url_for('admin_panel', booking_page=bookings['page'], revision_page=revisions['prev_page'], account_page=accounts['page'], search=request.args.get('search', '')) }}">Prev</a>
+      {% endif %}
+      <span>Page {{ revisions['page'] }} / {{ revisions['pages'] }}</span>
+      {% if revisions['has_next'] %}
+      <a href="{{ url_for('admin_panel', booking_page=bookings['page'], revision_page=revisions['next_page'], account_page=accounts['page'], search=request.args.get('search', '')) }}">Next</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="glass-card admin-section">
+    <h2>Recent Accounts</h2>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in accounts['items'] %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.email }}</td>
+            <td>{{ item.role }}</td>
+            <td>{{ item.created_at[:10] if item.created_at else '—' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4">No user accounts yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      {% if accounts['has_prev'] %}
+      <a href="{{ url_for('admin_panel', booking_page=bookings['page'], revision_page=revisions['page'], account_page=accounts['prev_page'], search=request.args.get('search', '')) }}">Prev</a>
+      {% endif %}
+      <span>Page {{ accounts['page'] }} / {{ accounts['pages'] }}</span>
+      {% if accounts['has_next'] %}
+      <a href="{{ url_for('admin_panel', booking_page=bookings['page'], revision_page=revisions['page'], account_page=accounts['next_page'], search=request.args.get('search', '')) }}">Next</a>
+      {% endif %}
+    </div>
+    <div class="admin-actions">
+      <a class="btn-primary" href="{{ url_for('admin_users_page') }}" style="margin-top: 20px; display: inline-block;">Manage All Users</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Invoices{% endblock %}
+{% block admin_heading %}Manage Invoices{% endblock %}
+
+{% block admin_body %}
+<div class="crud-layout stacked-crud">
+  <div class="glass-card admin-section">
+    <h2>Create Invoice</h2>
+    <form method="POST" action="{{ url_for('admin_create_invoice') }}" class="crud-form" style="padding:0;">
+      <div class="form-grid-2">
+        <div>
+          <label>User *</label>
+          <select name="user_id" required>
+              <option value="">Select user</option>
+              {% for user in users %}
+              <option value="{{ user.id }}">
+                {% if user.name and user.email %}
+                  {{ user.name }} — {{ user.email }}
+                {% elif user.email %}
+                  {{ user.email }}
+                {% else %}
+                  User ID {{ user.id }}
+                {% endif %}
+              </option>
+                {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label>Project</label>
+          <select name="project_id">
+            <option value="">Select project</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">
+              {{ project.title }}{% if project.client_name %} — {{ project.client_name }}{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label>Invoice Title</label>
+          <input type="text" name="title" placeholder="Brand identity phase 1">
+        </div>
+
+        <div>
+          <label>Amount *</label>
+          <input type="number" name="amount" min="1" step="0.01" placeholder="5000" required>
+        </div>
+
+        <div>
+          <label>Due Date</label>
+          <input type="date" name="due_date">
+        </div>
+
+        <div>
+          <label>Status</label>
+          <select name="status">
+            {% for s in ['Pending','Partially Paid','Paid','Overdue','Cancelled'] %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Add milestone details, payment terms, or notes"></textarea>
+      </div>
+
+      <div class="admin-actions">
+        <button class="btn-primary" type="submit">Create Invoice</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="glass-card admin-section">
+    <h2>Manage Invoices</h2>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>User</th>
+            <th>Project</th>
+            <th>Client</th>
+            <th>Amount</th>
+            <th>Manage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoices['items'] %}
+          <tr>
+            <td>
+              <strong>{{ item.invoice_no }}</strong><br>
+              {{ item.title or 'Untitled Invoice' }}<br>
+              <a href="{{ url_for('download_invoice_pdf', invoice_id=item.id) }}" class="admin-pdf-link">
+                <span style="font-size: 1.1rem; vertical-align: middle;">📄</span> Download PDF
+              </a>
+            </td>
+
+            <td>
+              {{ item.user_name or '—' }}<br>
+              <small>{{ item.user_email or '—' }}</small>
+            </td>
+
+            <td>{{ item.project_title or '—' }}</td>
+            <td>{{ item.client_name or '—' }}</td>
+
+            <td style="min-width: 180px;">
+              <div style="margin-bottom: 8px;">
+                <span style="font-size: 1.1rem; font-weight: 700;">₹{{ item.amount }}</span>
+                <span class="badge {{ item.status|lower }}" style="margin-left: 8px;">{{ item.status }}</span>
+                {% if item.status != 'Paid' and item.status != 'Cancelled' and item.due_date %}
+                  {% if item.due_date < today %}
+                    <span class="badge rejected" style="margin-top: 4px; display: block; width: fit-content;">OVERDUE</span>
+                  {% elif item.due_date == today %}
+                    <span class="badge reviewing" style="margin-top: 4px; display: block; width: fit-content;">DUE TODAY</span>
+                  {% elif item.due_date <= three_days_later %}
+                    <span class="badge new" style="margin-top: 4px; display: block; width: fit-content;">DUE SOON</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+              <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7); display: grid; gap: 4px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Paid:</span>
+                  <span style="color: #3fcd80;">₹{{ item.paid_amount or 0 }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
+                  <span>Balance:</span>
+                  <span style="color: {% if item.balance_amount > 0 %}#ff667c{% else %}#3fcd80{% endif %}; font-weight: 600;">₹{{ item.balance_amount if item.balance_amount is not none else item.amount }}</span>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <form method="POST" action="{{ url_for('admin_update_invoice', invoice_id=item.id) }}" class="inline-form">
+                <select name="status">
+                  {% for s in ['Pending','Partially Paid','Paid','Overdue','Cancelled'] %}
+                  <option value="{{ s }}" {% if item.status == s %}selected{% endif %}>{{ s }}</option>
+                  {% endfor %}
+                </select>
+                <input type="date" name="due_date" value="{{ item.due_date or '' }}">
+                <input type="text" name="notes" value="{{ item.notes or '' }}" placeholder="Notes">
+                <button class="btn-outline" type="submit">Save</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6">No invoices yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  <div class="pagination">
+    {% if invoices['has_prev'] %}<a href="{{ url_for('admin_invoices_page', page=invoices['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ invoices['page'] }} / {{ invoices['pages'] }}</span>
+    {% if invoices['has_next'] %}<a href="{{ url_for('admin_invoices_page', page=invoices['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+
+  </div>
+</div>
+{% endblock %}

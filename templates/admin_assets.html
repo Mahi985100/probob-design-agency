@@ -1,0 +1,26 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Assets{% endblock %}
+{% block admin_heading %}Files / Assets{% endblock %}
+{% block admin_body %}
+<div class="glass-card admin-section">
+  <h2>Uploaded Files</h2>
+  <div class="table-wrap"><table class="admin-table"><thead><tr><th>Title</th><th>Client</th><th>Project</th><th>File</th><th>Type</th><th>Date</th></tr></thead><tbody>
+    {% for item in files['items'] %}
+    <tr>
+      <td>{{ item.title or 'Untitled' }}</td>
+      <td>{{ item.client_name or '—' }}</td>
+      <td>{{ item.project_title or '—' }}</td>
+      <td>{% if item.file_path %}<a href="{{ item.file_path }}" target="_blank">{{ item.filename }}</a> <a href="{{ item.file_path }}" download class="btn-outline" style="padding: 2px 8px; font-size: 0.8rem; margin-left: 10px;">Download</a>{% else %}{{ item.filename }}{% endif %}</td>
+      <td>{{ item.file_type or '—' }}</td>
+      <td>{{ item.created_at[:10] if item.created_at else '—' }}</td>
+    </tr>
+    {% else %}<tr><td colspan="6">No uploaded assets yet.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <div class="pagination">
+    {% if files['has_prev'] %}<a href="{{ url_for('admin_assets_page', page=files['prev_page'], search=request.args.get('search', '')) }}">Prev</a>{% endif %}
+    <span>Page {{ files['page'] }} / {{ files['pages'] }}</span>
+    {% if files['has_next'] %}<a href="{{ url_for('admin_assets_page', page=files['next_page'], search=request.args.get('search', '')) }}">Next</a>{% endif %}
+  </div>
+
+</div>
+{% endblock %}

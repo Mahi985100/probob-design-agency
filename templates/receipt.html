@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Payment Receipt{% endblock %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        {% if receipt.status == 'paid' %}
+        <span class="section-kicker">✅ Payment Confirmed</span>
+        <h1>Your Receipt is Ready</h1>
+        <p>Thank you for your payment. Download your receipt below.</p>
+        {% elif receipt.status == 'failed' %}
+        <span class="section-kicker">❌ Payment Failed</span>
+        <h1>Payment Not Completed</h1>
+        <p>Your payment could not be confirmed. Please try again from the services page.</p>
+        {% else %}
+        <span class="section-kicker">⏳ Payment Pending Confirmation</span>
+        <h1>Confirming Payment</h1>
+        <p>Your payment is being confirmed. The receipt download option will appear here only after payment is successfully completed and confirmed.</p>
+        {% endif %}
+    </div>
+</div>
+
+<section class="section">
+    <div class="container narrow">
+
+        {% if receipt.status == 'paid' %}
+        <div class="receipt-preview" id="receipt-card">
+            <div class="receipt-header">
+                <div class="receipt-logo">PROBOB<span style="color:var(--gold);">.</span></div>
+                <div class="receipt-title-block">
+                    <h3>PAYMENT RECEIPT</h3>
+                    <span class="receipt-paid-badge">✓ PAID</span>
+                </div>
+                <div class="receipt-meta">
+                    <span>Receipt No: <strong>{{ receipt.receipt_no }}</strong></span>
+                    <span>Date: <strong>{{ receipt.date }}</strong></span>
+                </div>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <div class="receipt-body">
+                <div class="receipt-section">
+                    <h4>Bill To</h4>
+                    <div class="receipt-field"><span>Name</span><strong>{{ receipt.name }}</strong></div>
+                    <div class="receipt-field"><span>Email</span><strong>{{ receipt.email }}</strong></div>
+                    <div class="receipt-field"><span>Phone</span><strong>{{ receipt.phone or 'N/A' }}</strong></div>
+                </div>
+
+                <div class="receipt-section">
+                    <h4>Service Details</h4>
+                    <div class="receipt-field"><span>Service</span><strong>{{ receipt.service }}</strong></div>
+                    <div class="receipt-field"><span>Project</span><strong>{{ receipt.project }}</strong></div>
+                    <div class="receipt-field"><span>Payment Method</span><strong>Razorpay / UPI / Card / Netbanking</strong></div>
+                    {% if receipt.razorpay_payment_id %}
+                    <div class="receipt-field"><span>Payment ID</span><strong>{{ receipt.razorpay_payment_id }}</strong></div>
+                    {% elif receipt.upi_ref %}
+                    <div class="receipt-field"><span>Reference ID</span><strong>{{ receipt.upi_ref }}</strong></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <div class="receipt-total-box">
+                <span>Total Amount Paid</span>
+                <span class="receipt-total-amount">₹{{ receipt.amount }}</span>
+            </div>
+
+            <div class="receipt-divider"></div>
+
+            <div class="receipt-footer">
+                <p>Probob Design Studio · hello@probobdesign.com · +91 98765 43210</p>
+                <p>Ahmedabad, India · www.probobdesign.com</p>
+                <p style="margin-top:8px; color: var(--gold); font-style: italic;">Thank you for choosing Probob Design Studio ✦</p>
+            </div>
+        </div>
+
+        <div class="receipt-actions">
+            <button class="btn-download-pdf" onclick="downloadPDF()">
+                ⬇️ Download Receipt as PDF
+            </button>
+            <a href="/services" class="btn-back-services">← Back to Services</a>
+        </div>
+
+        {% elif receipt.status == 'failed' %}
+        <div class="receipt-preview" style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">❌</div>
+            <h3 style="margin-bottom: 15px;">Payment Failed</h3>
+            <p style="color: var(--text-light); max-width: 500px; margin: 0 auto 24px;">
+                We could not confirm your payment. Please go back to the services page and try the payment again.
+            </p>
+            <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                <a href="/services" class="btn-primary">Try Payment Again</a>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="receipt-preview" style="text-align: center; padding: 60px 20px;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">⏳</div>
+            <h3 style="margin-bottom: 15px;">Payment Received, Waiting for Confirmation</h3>
+            <p style="color: var(--text-light); max-width: 500px; margin: 0 auto 24px;">
+                Your payment request has been created successfully. Once the payment is completed and confirmed, the download receipt button will unlock on this page. Keep this page saved or note your receipt number (<strong>{{ receipt.receipt_no }}</strong>) to check back later.
+            </p>
+            <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                <a href="/receipt/{{ receipt.receipt_no }}" class="btn-outline">🔄 Check Status Again</a>
+                <a href="/services" class="btn-primary">Return to Services</a>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+
+{% if receipt.status == 'paid' %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+    const W = 210;
+    const margin = 20;
+    let y = 0;
+
+    doc.setFillColor(10, 10, 10);
+    doc.rect(0, 0, W, 50, 'F');
+
+    doc.setFillColor(212, 175, 55);
+    doc.rect(0, 48, W, 2, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(28);
+    doc.setTextColor(255, 255, 255);
+    doc.text('PROBOB', margin, 22);
+
+    doc.setTextColor(212, 175, 55);
+    doc.text('.', margin + doc.getTextWidth('PROBOB') + 0.5, 22);
+
+    doc.setFontSize(11);
+    doc.setTextColor(158, 154, 147);
+    doc.setFont('helvetica', 'normal');
+    doc.text('PAYMENT RECEIPT', margin, 34);
+
+    doc.setFillColor(20, 80, 20);
+    doc.roundedRect(W - margin - 32, 14, 32, 12, 3, 3, 'F');
+    doc.setTextColor(100, 220, 100);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('✓  PAID', W - margin - 28, 22);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(158, 154, 147);
+    doc.text('Receipt No: {{ receipt.receipt_no }}', W - margin, 33, { align: 'right' });
+    doc.text('Date: {{ receipt.date }}', W - margin, 39, { align: 'right' });
+
+    y = 62;
+
+    function sectionHeader(label) {
+        doc.setFillColor(24, 24, 24);
+        doc.rect(margin, y, W - margin * 2, 8, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(212, 175, 55);
+        doc.text(label.toUpperCase(), margin + 4, y + 5.5);
+        y += 12;
+    }
+
+    function field(label, value) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(90, 90, 90);
+        doc.text(label, margin + 4, y);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 30, 30);
+        doc.text(String(value || 'N/A'), margin + 55, y);
+        y += 8;
+    }
+
+    function divider() {
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, W - margin, y);
+        y += 6;
+    }
+
+    sectionHeader('Bill To');
+    field('Name', '{{ receipt.name }}');
+    field('Email', '{{ receipt.email }}');
+    field('Phone', '{{ receipt.phone or "N/A" }}');
+    y += 4;
+    divider();
+
+    sectionHeader('Service Details');
+    field('Service', '{{ receipt.service }}');
+    field('Project Brief', '{{ receipt.project | truncate(40, True, "...") }}');
+    field('Payment Method', 'Razorpay / UPI / Card / Netbanking');
+    {% if receipt.razorpay_payment_id %}
+    field('Payment ID', '{{ receipt.razorpay_payment_id }}');
+    {% elif receipt.upi_ref %}
+    field('Reference ID', '{{ receipt.upi_ref }}');
+    {% endif %}
+    y += 4;
+    divider();
+
+    doc.setFillColor(212, 175, 55);
+    doc.rect(margin, y, W - margin * 2, 16, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(10, 10, 10);
+    doc.text('Total Amount Paid', margin + 6, y + 10.5);
+    doc.setFontSize(16);
+    doc.text('₹{{ receipt.amount }}', W - margin - 6, y + 10.5, { align: 'right' });
+    y += 24;
+
+    divider();
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(130, 130, 130);
+    doc.text('Probob Design Studio  ·  hello@probobdesign.com  ·  +91 98765 43210', W / 2, y + 6, { align: 'center' });
+    doc.text('Ahmedabad, India  ·  www.probobdesign.com', W / 2, y + 13, { align: 'center' });
+
+    doc.setTextColor(212, 175, 55);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(10);
+    doc.text('Thank you for choosing Probob Design Studio ✦', W / 2, y + 22, { align: 'center' });
+
+    doc.setFillColor(212, 175, 55);
+    doc.rect(0, 285, W, 12, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(10, 10, 10);
+    doc.text('PROBOB DESIGN STUDIO  ✦  PREMIUM CREATIVE AGENCY', W / 2, 292.5, { align: 'center' });
+
+    doc.save('Probob_Receipt_{{ receipt.receipt_no }}.pdf');
+}
+
+// Auto-trigger download if URL has ?download=1
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('download') === '1') {
+        setTimeout(() => {
+            downloadPDF();
+        }, 1000); // Small delay to let fonts/styles settle
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

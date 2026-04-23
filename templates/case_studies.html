@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Case Studies{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <span class="section-kicker">Deep Dives</span>
+        <h1>Case Studies</h1>
+        <p>Behind the work — process, decisions, and outcomes.</p>
+    </div>
+</div>
+<section class="section">
+    <div class="container">
+        <div class="case-studies-grid">
+            {% for item in items %}
+            <div class="case-card">
+                <div class="case-visual">
+                    <div class="case-emoji">{{ item.emoji }}</div>
+                    <span class="case-tag">{{ item.category }}</span>
+                </div>
+                <div class="case-body">
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.description }}</p>
+                    <div class="case-meta">
+                        <span>Category: <strong>{{ item.category }}</strong></span>
+                    </div>
+                    <a href="/portfolio" class="case-link">Read Case Study →</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "admin_base.html" %}
+{% block title %}Admin - View Dates{% endblock %}
+{% block admin_heading %}View Dates{% endblock %}
+
+{% block admin_body %}
+<div class="glass-card admin-section" style="margin-bottom: 25px;">
+    <div class="calendar-card">
+        <div class="calendar-topbar" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="panel-kicker" style="margin-bottom: 0;">Schedule</span>
+                <h2 style="margin: 0;">{{ month_name }} <em>{{ year }}</em></h2>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <a href="{{ url_for('admin_view_dates', month=prev_month, year=prev_year) }}" class="btn-outline" style="padding: 5px 12px;">← Prev</a>
+                <a href="{{ url_for('admin_view_dates', month=today.month, year=today.year) }}" class="btn-outline" style="padding: 5px 12px;">Today</a>
+                <a href="{{ url_for('admin_view_dates', month=next_month, year=next_year) }}" class="btn-outline" style="padding: 5px 12px;">Next →</a>
+            </div>
+        </div>
+
+        <div class="calendar-grid calendar-head" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); font-size: 0.8rem;">
+            <div>MON</div><div>TUE</div><div>WED</div>
+            <div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div>
+        </div>
+
+        {% for week in cal %}
+        <div class="calendar-grid calendar-week" style="display: grid; grid-template-columns: repeat(7, 1fr); min-height: 120px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            {% for day in week %}
+                {% if day == 0 %}
+                    <div class="calendar-day empty" style="background: rgba(255,255,255,0.02);"></div>
+                {% else %}
+                    <div class="calendar-day {% if day == today.day and month == today.month and year == today.year %}today{% endif %}" style="padding: 10px; border-right: 1px solid rgba(255,255,255,0.05); position: relative;">
+                        <div class="calendar-day-num" style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; {% if day == today.day and month == today.month and year == today.year %}color: #56a4ff;{% endif %}">{{ day }}</div>
+
+                        <div class="calendar-events" style="display: grid; gap: 4px;">
+                            {% if day in project_map %}
+                                {% for item in project_map[day] %}
+                                    <div class="calendar-event" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(63, 205, 128, 0.1); border-left: 2px solid #3fcd80; color: #3fcd80; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Project: {{ item.title }}">
+                                        📦 {{ item.title }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            {% if day in booking_map %}
+                                {% for item in booking_map[day] %}
+                                    <div class="calendar-event" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(86, 164, 255, 0.1); border-left: 2px solid #56a4ff; color: #56a4ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Meeting: {{ item.title }}">
+                                        📅 {{ item.title }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="admin-columns">
+    <div class="glass-card admin-section">
+        <div class="panel-head">
+            <div>
+                <span class="panel-kicker">Upcoming</span>
+                <h2>Confirmed <em>Meetings</em></h2>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Client / Time</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for meet in upcoming_meetings %}
+                    <tr>
+                        <td>
+                            <strong>{{ meet.name }}</strong><br>
+                            <small style="color: #56a4ff;">{{ meet.booking_date }} at {{ meet.booking_time }}</small>
+                        </td>
+                        <td>{{ meet.service_interest or '—' }}</td>
+                        <td><span class="badge {{ meet.status|lower }}">{{ meet.status }}</span></td>
+                        <td>
+                            <form method="POST" action="{{ url_for('admin_update_booking', booking_id=meet.id) }}" style="display: flex; gap: 5px;">
+                                <select name="status" style="font-size: 0.75rem; padding: 4px;">
+                                    <option value="Confirmed" {% if meet.status == 'Confirmed' %}selected{% endif %}>Confirm</option>
+                                    <option value="Completed">Complete</option>
+                                    <option value="Cancelled">Cancel</option>
+                                </select>
+                                <button type="submit" class="btn-outline" style="padding: 2px 8px; font-size: 0.7rem;">Update</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="admin-search-empty">No upcoming meetings.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="glass-card admin-section">
+        <div class="panel-head">
+            <div>
+                <span class="panel-kicker">Archive</span>
+                <h2>Past <em>Consultations</em></h2>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for meet in past_meetings %}
+                    <tr>
+                        <td>
+                            <strong>{{ meet.name }}</strong><br>
+                            <small style="color: rgba(255,255,255,0.6);">{{ meet.email }}</small>
+                        </td>
+                        <td>{{ meet.booking_date }}</td>
+                        <td><span class="badge {{ meet.status|lower }}">{{ meet.status }}</span></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="admin-search-empty">No history.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}User Profile{% endblock %}
+{% block newsletter %}{% endblock %}
+{% block content %}
+<div class="page-hero compact dashboard-hero-bg">
+    <div class="container">
+        <span class="section-kicker">My Account</span>
+        <h1>User Profile</h1>
+        <p>Manage your personal details and view your activity.</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="dashboard-grid-2">
+            <!-- Profile Info Card -->
+            <div class="dash-panel glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Account Details</span>
+                        <h2>Profile <em>Information</em></h2>
+                    </div>
+                    <a href="{{ url_for('profile_edit') }}" class="btn-outline">Edit Profile</a>
+                </div>
+                <div style="padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div style="width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 4px solid var(--accent-1); margin-bottom: 20px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 4rem;">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture }}" alt="{{ user.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        👤
+                        {% endif %}
+                    </div>
+                    <h3 style="font-size: 1.8rem; margin-bottom: 5px;">{{ user.name }}</h3>
+                    <p style="color: var(--accent-2); margin-bottom: 15px;">{{ user.email }}</p>
+                    
+                    {% if user.bio %}
+                    <p style="color: var(--text-2); margin-bottom: 20px; font-style: italic;">"{{ user.bio }}"</p>
+                    {% endif %}
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 20px;">
+                        <div style="text-align: left; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <span style="font-size: 0.8rem; color: var(--text-3); text-transform: uppercase;">Phone</span>
+                            <div style="color: var(--text-1); font-weight: bold;">{{ user.phone or 'Not set' }}</div>
+                        </div>
+                        <div style="text-align: left; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <span style="font-size: 0.8rem; color: var(--text-3); text-transform: uppercase;">Location</span>
+                            <div style="color: var(--text-1); font-weight: bold;">{{ user.location or 'Not set' }}</div>
+                        </div>
+                        <div style="text-align: left; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <span style="font-size: 0.8rem; color: var(--text-3); text-transform: uppercase;">Joined</span>
+                            <div style="color: var(--text-1); font-weight: bold;">{{ user.created_at[:10] }}</div>
+                        </div>
+                        <div style="text-align: left; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                            <span style="font-size: 0.8rem; color: var(--text-3); text-transform: uppercase;">Role</span>
+                            <div style="color: var(--text-1); font-weight: bold;">{{ user.role|capitalize }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wishlist Card -->
+            <div class="dash-panel glass-card">
+                <div class="panel-head">
+                    <div>
+                        <span class="panel-kicker">Saved Services</span>
+                        <h2>My <em>Wishlist</em></h2>
+                    </div>
+                    <a href="/services" class="btn-outline">Browse More</a>
+                </div>
+                <div style="padding: 20px;">
+                    {% if wishlist %}
+                    <div class="metric-list">
+                        {% for item in wishlist %}
+                        <div class="metric-item" style="display: flex; align-items: center; gap: 15px;">
+                            <div style="font-size: 2rem;">{{ item.icon }}</div>
+                            <div style="flex-grow: 1;">
+                                <div style="font-weight: bold; color: var(--text-1);">{{ item.title }}</div>
+                                <div style="font-size: 0.85rem; color: var(--text-2);">{{ item.description[:60] }}...</div>
+                            </div>
+                            <button onclick="toggleWishlist({{ item.service_id }})" class="btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Remove</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">Your wishlist is empty. Explore our services to save some!</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking History Section -->
+        <div class="dash-section glass-card" style="margin-top: 30px;">
+            <div class="panel-head">
+                <div>
+                    <span class="panel-kicker">Past & Upcoming</span>
+                    <h2>Booking <em>History</em></h2>
+                </div>
+            </div>
+            {% if bookings %}
+            <div class="dash-table-wrap">
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Mode</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bookings %}
+                        <tr>
+                            <td>{{ b.service_interest or '—' }}</td>
+                            <td>{{ b.booking_date }}</td>
+                            <td>{{ b.booking_time }}</td>
+                            <td>{{ b.meeting_mode or '—' }}</td>
+                            <td><span class="status-badge status-{{ b.status|lower|replace(' ','-') }}">{{ b.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">No bookings found.</div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+function toggleWishlist(serviceId) {
+    fetch(`/wishlist/toggle/${serviceId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'removed') {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}
